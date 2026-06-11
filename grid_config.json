@@ -1,0 +1,27 @@
+{
+  "max_slots_per_cell": 2,
+  "zones": {
+    "G": {
+      "display_name": "Raw Material (G-Racks)",
+      "shelves": {
+        "G01": { "sections": 33, "rows": 6 },
+        "G02": { "sections": 32, "rows": 6 },
+        "G03": { "sections": 33, "rows": 6 },
+        "G04": { "sections": 17, "rows": 6 },
+        "G05": { "sections": 32, "rows": 6 }
+      }
+    },
+    "P": {
+      "display_name": "Raw Material (P-Racks)",
+      "shelves": {
+        "P01": { "sections": 21, "rows": 6 }
+      }
+    },
+    "K": {
+      "display_name": "Raw Material (K-Racks)",
+      "shelves": {
+        "K03": { "sections": 30, "rows": 6 }
+      }
+    }
+  }
+}

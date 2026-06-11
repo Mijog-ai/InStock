@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WMS Grid Locator - Zone Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9ff",
+                        "primary-container": "#1e293b",
+                        "surface-container": "#e5eeff",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#bcc7de",
+                        "secondary-fixed": "#ffdbca",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#002109",
+                        "primary": "#091426",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-secondary-fixed": "#341100",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-high": "#dce9ff",
+                        "inverse-surface": "#213145",
+                        "on-primary-fixed": "#111c2d",
+                        "inverse-on-surface": "#eaf1ff",
+                        "inverse-primary": "#bcc7de",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary-container": "#003010",
+                        "primary-fixed": "#d8e3fb",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "background": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-secondary-container": "#5c2400",
+                        "on-surface": "#0b1c30",
+                        "secondary-fixed-dim": "#ffb690",
+                        "tertiary": "#001906",
+                        "on-tertiary-container": "#00a64a",
+                        "outline-variant": "#c5c6cd",
+                        "surface-variant": "#d3e4fe",
+                        "secondary": "#9d4300",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#45474c",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#545f73",
+                        "outline": "#75777d",
+                        "on-secondary-fixed-variant": "#783200",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-container": "#fd761a",
+                        "on-primary-container": "#8590a6",
+                        "on-background": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "base": "4px",
+                        "touch-target": "48px",
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "code-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tactile-card {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom-width: 4px;
+            border-color: rgba(0,0,0,0.1);
+        }
+        .tactile-card:active {
+            transform: translateY(2px);
+            border-bottom-width: 0;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-24 lg:pb-0 lg:pl-64">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target bg-primary text-on-primary shadow-sm border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<span class="text-title-lg font-title-lg font-bold text-on-primary">WMS Grid Locator</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden md:flex flex-col items-end">
+<span class="font-label-md text-label-md">Warehouse Admin</span>
+<span class="text-[10px] uppercase opacity-70">Zone Alpha-9</span>
+</div>
+<div class="h-8 w-8 rounded-full bg-surface-container-highest overflow-hidden border border-on-primary/20">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiQm8-DTkQCv7DjcXXfjNFH1w0gve6w6k7Dd5cWBbFg0LMxtg7jwELod0rg06wmTFe5f3bchsefbsVVu1YUybhLUpuN0mnQTl9HUuI8hTxlVeRjjD2t4ety9JPzyQFmPEychddQwHq3-5xhN8ucxG5HZT5jNVcS8s68oN0n5FhB4rzTGJgaqHH97-I4pRUk9qBLuJy5_tYt7c-EDiaFfGSN99wWf9C546Gavb7PkYmmslINyWKC24U_yBhJLSx8rqII6vxzMhFTaZr"/>
+</div>
+<button class="material-symbols-outlined hover:bg-primary-container p-2 rounded-full transition-colors">logout</button>
+</div>
+</header>
+<!-- SideNavBar (Desktop Only) -->
+<aside class="hidden lg:flex flex-col h-screen fixed left-0 top-0 pt-touch-target w-64 bg-surface-container-low border-r border-outline-variant z-40">
+<div class="p-md">
+<button class="w-full bg-secondary-container text-on-secondary-container py-sm px-md rounded-lg font-label-md flex items-center justify-center gap-xs shadow-sm tactile-card">
+<span class="material-symbols-outlined">barcode_scanner</span>
+                Quick Scan
+            </button>
+</div>
+<nav class="flex-1 px-xs py-sm">
+<a class="bg-secondary-container text-on-secondary-container rounded-lg mx-2 my-1 flex items-center gap-sm px-md py-sm scale-[0.98] shadow-inner" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-label-md text-label-md">Zones</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Users</span>
+</a>
+</nav>
+<div class="border-t border-outline-variant p-sm">
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm hover:bg-surface-container-high rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm hover:bg-surface-container-high rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-container-margin max-w-7xl mx-auto space-y-xl">
+<!-- Welcome Header -->
+<section>
+<h1 class="font-headline-lg text-headline-lg text-primary">Zone Overview</h1>
+<p class="font-body-md text-on-surface-variant">Real-time capacity tracking for Zone Alpha-9.</p>
+</section>
+<!-- Bento Grid for Zone Status -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<!-- G - Raw Material Card -->
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm tactile-card flex flex-col gap-md cursor-pointer group">
+<div class="flex justify-between items-start">
+<div class="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center text-primary-fixed-dim">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">inventory</span>
+</div>
+<span class="px-sm py-1 bg-surface-container-high text-primary font-label-md rounded-full text-xs uppercase tracking-wider">Zone G</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Raw Material</h3>
+<div class="flex justify-between items-end mt-sm">
+<span class="font-body-md text-on-surface-variant">42 / 120 locations</span>
+<span class="font-label-md text-primary">35%</span>
+</div>
+<div class="w-full bg-outline-variant h-3 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 35%;"></div>
+</div>
+</div>
+</div>
+<!-- F - Finished Goods Card -->
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm tactile-card flex flex-col gap-md cursor-pointer group">
+<div class="flex justify-between items-start">
+<div class="h-12 w-12 rounded-lg bg-tertiary-fixed/20 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">package_2</span>
+</div>
+<span class="px-sm py-1 bg-tertiary-fixed/10 text-on-tertiary-container font-label-md rounded-full text-xs uppercase tracking-wider">Zone F</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Finished Goods</h3>
+<div class="flex justify-between items-end mt-sm">
+<span class="font-body-md text-on-surface-variant">98 / 120 locations</span>
+<span class="font-label-md text-on-tertiary-container">81%</span>
+</div>
+<div class="w-full bg-outline-variant h-3 rounded-full mt-2 overflow-hidden">
+<div class="bg-on-tertiary-container h-full rounded-full transition-all duration-1000" style="width: 81%;"></div>
+</div>
+</div>
+</div>
+<!-- SP - Spare / Blocked Card -->
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm tactile-card flex flex-col gap-md cursor-pointer group">
+<div class="flex justify-between items-start">
+<div class="h-12 w-12 rounded-lg bg-secondary-fixed/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">report</span>
+</div>
+<span class="px-sm py-1 bg-secondary-fixed/20 text-secondary font-label-md rounded-full text-xs uppercase tracking-wider">Zone SP</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-primary">Spare / Blocked</h3>
+<div class="flex justify-between items-end mt-sm">
+<span class="font-body-md text-on-surface-variant">15 / 60 locations</span>
+<span class="font-label-md text-secondary">25%</span>
+</div>
+<div class="w-full bg-outline-variant h-3 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full rounded-full transition-all duration-1000" style="width: 25%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Bookings Table -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-md overflow-hidden">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">Recent Bookings</h2>
+<div class="flex gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-lg">filter_list</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-lg">download</button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scroll">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Location</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Item No.</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Batch</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Qty</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">User</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Timestamp</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-lg py-md font-code-md text-primary">G-04-12</td>
+<td class="px-lg py-md font-body-md">SKU-8829-01</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant">B230914-1</td>
+<td class="px-lg py-md font-label-md">250 EA</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-6 h-6 rounded-full bg-primary text-[10px] flex items-center justify-center text-white">JD</div>
+<span class="font-body-md text-xs">J. Doe</span>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant text-xs">Today, 10:45 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-lg py-md font-code-md text-primary">F-02-01</td>
+<td class="px-lg py-md font-body-md">SKU-1022-FG</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant">B230914-A</td>
+<td class="px-lg py-md font-label-md">1,200 EA</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-6 h-6 rounded-full bg-secondary text-[10px] flex items-center justify-center text-white">MK</div>
+<span class="font-body-md text-xs">M. Khan</span>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant text-xs">Today, 09:30 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-lg py-md font-code-md text-primary">SP-01-05</td>
+<td class="px-lg py-md font-body-md">MNT-77-SPR</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant">BLOCK-99</td>
+<td class="px-lg py-md font-label-md text-error">12 EA</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-6 h-6 rounded-full bg-tertiary-container text-[10px] flex items-center justify-center text-white">SA</div>
+<span class="font-body-md text-xs">S. Adler</span>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant text-xs">Yesterday, 16:20 PM</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-lg py-md font-code-md text-primary">G-11-22</td>
+<td class="px-lg py-md font-body-md">SKU-8829-01</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant">B230914-1</td>
+<td class="px-lg py-md font-label-md">150 EA</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-6 h-6 rounded-full bg-primary text-[10px] flex items-center justify-center text-white">JD</div>
+<span class="font-body-md text-xs">J. Doe</span>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface-variant text-xs">Yesterday, 14:15 PM</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-md flex justify-between items-center bg-surface-container-low border-t border-outline-variant">
+<span class="text-xs font-body-md text-on-surface-variant">Showing 4 of 24 bookings</span>
+<div class="flex gap-xs">
+<button class="h-8 w-8 flex items-center justify-center rounded border border-outline text-on-surface-variant disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="h-8 w-8 flex items-center justify-center rounded border border-outline text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-touch-target px-xs pb-safe bg-surface-container-highest border-t border-outline-variant shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-secondary text-on-secondary rounded-xl px-4 py-1 scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md-mobile text-label-md-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-variant p-2 rounded-xl" href="#">
+<span class="material-symbols-outlined">grid_on</span>
+<span class="font-label-md-mobile text-label-md-mobile">Grid</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-variant p-2 rounded-xl" href="#">
+<span class="material-symbols-outlined">barcode_scanner</span>
+<span class="font-label-md-mobile text-label-md-mobile">Scan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-variant p-2 rounded-xl" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md-mobile text-label-md-mobile">Profile</span>
+</a>
+</nav>
+<!-- Visual Polish: Background Subtle Mesh -->
+<div class="fixed inset-0 -z-10 opacity-20 pointer-events-none">
+<div class="absolute inset-0 bg-[radial-gradient(#e5eeff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+</div>
+</body></html>

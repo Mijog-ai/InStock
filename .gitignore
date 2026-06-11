@@ -1,0 +1,23 @@
+# Firebase credentials
+firebase-credentials.json
+google-services.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+wms.db
+
+# Android
+tablet_android/.gradle/
+tablet_android/build/
+tablet_android/app/build/
+tablet_android/local.properties
+tablet_android/*.hprof
+
+# IDE
+.idea/
+*.iml
+
+# Claude
+.claude/

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WMS Grid Locator - Logistics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9ff",
+                        "primary-container": "#1e293b",
+                        "surface-container": "#e5eeff",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#bcc7de",
+                        "secondary-fixed": "#ffdbca",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#002109",
+                        "primary": "#091426",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-secondary-fixed": "#341100",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#dce9ff",
+                        "inverse-surface": "#213145",
+                        "on-primary-fixed": "#111c2d",
+                        "inverse-on-surface": "#eaf1ff",
+                        "inverse-primary": "#bcc7de",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary-container": "#003010",
+                        "primary-fixed": "#d8e3fb",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "background": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-secondary-container": "#5c2400",
+                        "on-surface": "#0b1c30",
+                        "secondary-fixed-dim": "#ffb690",
+                        "tertiary": "#001906",
+                        "on-tertiary-container": "#00a64a",
+                        "outline-variant": "#c5c6cd",
+                        "surface-variant": "#d3e4fe",
+                        "secondary": "#9d4300",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#45474c",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#545f73",
+                        "outline": "#75777d",
+                        "on-secondary-fixed-variant": "#783200",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-container": "#fd761a",
+                        "on-primary-container": "#8590a6",
+                        "on-background": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "base": "4px",
+                        "touch-target": "48px",
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "code-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shelf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+        }
+        .touch-cell {
+            height: 100px;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .touch-cell:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .modal-backdrop {
+            background-color: rgba(9, 20, 38, 0.4);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-touch-target lg:pb-0">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target bg-primary dark:bg-primary text-on-primary shadow-sm border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<span class="text-title-lg font-title-lg font-bold text-on-primary">WMS Grid Locator</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden md:flex items-center gap-lg mr-xl">
+<button class="font-label-md text-label-md text-on-primary border-b-2 border-secondary h-full flex items-center px-sm">Grid</button>
+<button class="font-label-md text-label-md text-on-primary-container hover:bg-primary-container transition-colors h-full flex items-center px-sm">Logistics</button>
+</div>
+<button class="material-symbols-outlined p-2 hover:bg-primary-container transition-colors rounded-full" data-icon="logout">logout</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-[64px] px-container-margin pb-xl max-w-[1280px] mx-auto">
+<!-- Zone Selector: 3 Large Buttons -->
+<section class="mt-lg grid grid-cols-3 gap-md">
+<button class="flex flex-col items-center justify-center py-xl bg-secondary-container text-on-secondary-container rounded-xl shadow-md border-2 border-secondary transition-all active:scale-95" onclick="selectZone('Alpha')">
+<span class="material-symbols-outlined text-[32px] mb-2" data-icon="grid_view">grid_view</span>
+<span class="font-headline-md text-headline-md">ZONE ALPHA</span>
+<span class="font-label-md text-label-md opacity-80">82% Capacity</span>
+</button>
+<button class="flex flex-col items-center justify-center py-xl bg-surface-container-high text-on-surface-variant rounded-xl shadow-sm border border-outline-variant hover:bg-surface-container-highest transition-all active:scale-95" onclick="selectZone('Beta')">
+<span class="material-symbols-outlined text-[32px] mb-2" data-icon="grid_view">grid_view</span>
+<span class="font-headline-md text-headline-md">ZONE BETA</span>
+<span class="font-label-md text-label-md opacity-80">45% Capacity</span>
+</button>
+<button class="flex flex-col items-center justify-center py-xl bg-surface-container-high text-on-surface-variant rounded-xl shadow-sm border border-outline-variant hover:bg-surface-container-highest transition-all active:scale-95" onclick="selectZone('Gamma')">
+<span class="material-symbols-outlined text-[32px] mb-2" data-icon="grid_view">grid_view</span>
+<span class="font-headline-md text-headline-md">ZONE GAMMA</span>
+<span class="font-label-md text-label-md opacity-80">12% Capacity</span>
+</button>
+</section>
+<!-- Shelf Navigation Tabs -->
+<nav class="mt-xl flex gap-xs overflow-x-auto no-scrollbar pb-2">
+<button class="flex-none px-xl py-md bg-primary-container text-on-primary rounded-t-lg font-label-md text-label-md">SHELF A1</button>
+<button class="flex-none px-xl py-md bg-surface-container-highest text-on-surface-variant rounded-t-lg font-label-md text-label-md hover:bg-surface-dim transition-colors">SHELF A2</button>
+<button class="flex-none px-xl py-md bg-surface-container-highest text-on-surface-variant rounded-t-lg font-label-md text-label-md hover:bg-surface-dim transition-colors">SHELF A3</button>
+<button class="flex-none px-xl py-md bg-surface-container-highest text-on-surface-variant rounded-t-lg font-label-md text-label-md hover:bg-surface-dim transition-colors">SHELF A4</button>
+<button class="flex-none px-xl py-md bg-surface-container-highest text-on-surface-variant rounded-t-lg font-label-md text-label-md hover:bg-surface-dim transition-colors">SHELF A5</button>
+<button class="flex-none px-xl py-md bg-surface-container-highest text-on-surface-variant rounded-t-lg font-label-md text-label-md hover:bg-surface-dim transition-colors">SHELF A6</button>
+</nav>
+<!-- Grid Layout: Interactive Cells -->
+<div class="bg-surface-container-low p-md rounded-b-xl border-x border-b border-outline-variant">
+<div class="shelf-grid" id="grid-container">
+<!-- Row A -->
+<button class="touch-cell flex flex-col items-center justify-center bg-tertiary-fixed text-tertiary-container rounded-lg border-2 border-on-tertiary-fixed-variant" onclick="openModal('book-out', 'A1-01')">
+<span class="font-label-md text-label-md font-bold">A1-01</span>
+<span class="font-body-md text-body-md">SKU-293</span>
+</button>
+<button class="touch-cell flex flex-col items-center justify-center bg-surface-bright text-outline rounded-lg border-2 border-dashed border-outline-variant" onclick="openModal('book-in', 'A1-02')">
+<span class="font-label-md text-label-md font-bold">A1-02</span>
+<span class="font-body-md text-body-md">EMPTY</span>
+</button>
+<button class="touch-cell flex flex-col items-center justify-center bg-tertiary-fixed text-tertiary-container rounded-lg border-2 border-on-tertiary-fixed-variant" onclick="openModal('book-out', 'A1-03')">
+<span class="font-label-md text-label-md font-bold">A1-03</span>
+<span class="font-body-md text-body-md">SKU-842</span>
+</button>
+<button class="touch-cell flex flex-col items-center justify-center bg-error-container text-on-error-container rounded-lg border-2 border-error" onclick="openModal('book-out', 'A1-04')">
+<span class="font-label-md text-label-md font-bold">A1-04</span>
+<span class="font-body-md text-body-md">EXPIRED</span>
+</button>
+<!-- Generated remaining cells for visual density -->
+<script>
+                    const container = document.getElementById('grid-container');
+                    for(let i=5; i<=48; i++) {
+                        const isEmpty = Math.random() > 0.4;
+                        const num = i < 10 ? '0'+i : i;
+                        const cell = document.createElement('button');
+                        cell.onclick = () => openModal(isEmpty ? 'book-in' : 'book-out', `A1-${num}`);
+                        cell.className = isEmpty 
+                            ? "touch-cell flex flex-col items-center justify-center bg-surface-bright text-outline rounded-lg border-2 border-dashed border-outline-variant"
+                            : "touch-cell flex flex-col items-center justify-center bg-tertiary-fixed text-tertiary-container rounded-lg border-2 border-on-tertiary-fixed-variant";
+                        cell.innerHTML = `<span class="font-label-md text-label-md font-bold">A1-${num}</span><span class="font-body-md text-body-md">${isEmpty ? 'EMPTY' : 'SKU-' + (100 + i)}</span>`;
+                        container.appendChild(cell);
+                    }
+                </script>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile/Handheld) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-touch-target px-xs pb-safe bg-surface-container-highest dark:bg-primary shadow-lg border-t border-outline-variant">
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-[10px]">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary text-on-secondary rounded-xl px-4 py-1 scale-90">
+<span class="material-symbols-outlined" data-icon="grid_on">grid_on</span>
+<span class="font-label-md text-[10px]">Grid</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="barcode_scanner">barcode_scanner</span>
+<span class="font-label-md text-[10px]">Scan</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-[10px]">Profile</span>
+</div>
+</nav>
+<!-- Modals Section -->
+<!-- Book-In Modal -->
+<div class="hidden fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-md" id="modal-book-in">
+<div class="bg-surface-container-lowest w-full max-w-[600px] rounded-xl shadow-2xl border-t-[4px] border-secondary overflow-hidden">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">Book-In to <span id="target-bin-in">A1-02</span></h2>
+<button class="material-symbols-outlined text-outline" data-icon="close" onclick="closeModals()">close</button>
+</div>
+<div class="p-lg space-y-lg">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">SCAN OR ENTER SKU</label>
+<input class="w-full h-touch-target text-headline-md px-md bg-surface-container border border-outline rounded-lg focus:ring-2 focus:ring-secondary" placeholder="Enter SKU ID..." type="text"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">QUANTITY</label>
+<div class="flex gap-md">
+<button class="h-touch-target w-touch-target bg-surface-container-highest rounded-lg font-headline-md">-</button>
+<input class="flex-1 h-touch-target text-center text-headline-md bg-surface-container border border-outline rounded-lg" type="number" value="1"/>
+<button class="h-touch-target w-touch-target bg-surface-container-highest rounded-lg font-headline-md">+</button>
+</div>
+</div>
+</div>
+<div class="p-lg bg-surface-container-low flex gap-md">
+<button class="flex-1 h-touch-target font-label-md text-label-md text-on-surface-variant bg-surface-container-high rounded-lg" onclick="closeModals()">CANCEL</button>
+<button class="flex-[2] h-touch-target font-label-md text-label-md bg-secondary text-on-secondary rounded-lg shadow-lg" onclick="closeModals()">CONFIRM BOOK-IN</button>
+</div>
+</div>
+</div>
+<!-- Book-Out Modal -->
+<div class="hidden fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-md" id="modal-book-out">
+<div class="bg-surface-container-lowest w-full max-w-[600px] rounded-xl shadow-2xl border-t-[4px] border-primary overflow-hidden">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">Book-Out from <span id="target-bin-out">A1-01</span></h2>
+<button class="material-symbols-outlined text-outline" data-icon="close" onclick="closeModals()">close</button>
+</div>
+<div class="p-lg flex gap-lg items-start">
+<div class="w-24 h-24 bg-surface-container-highest rounded-lg flex items-center justify-center overflow-hidden">
+<img alt="Package SKU" class="w-full h-full object-cover" data-alt="A clean industrial photo of a cardboard logistics box with clear barcode labels sitting on a metal warehouse shelf. The lighting is bright and even, typical of a modern professional warehouse facility. The background shows slightly out-of-focus racking with orange and blue steel beams, emphasizing an organized industrial atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPtykfcMiebUaojCwxdheJUpRS9S9AMnEASk71Y6st8xqvfNaWf3dKqbSkd8J8bwS3GbIIbmeYxjPLMHHfPXHArFqt6sjuRvlIyOu7syxFzDhlecGIIijF_HtwsOgazldAyz5Azs2lUt1W5eRqwnLGy_-zXzinL939LKVF2IeRrpzv1zygZPrTSDDHXpXzkav31XyK8-zhh9UkEKEHT4L93LAWpRp9-AlQSouyge_j5HNnWJn0Pv4mcsm7V5bOlOeVmmeQvfMa-x7o"/>
+</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface-variant">CURRENT SKU</p>
+<p class="font-headline-md text-headline-md">SKU-293-ALPHA</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Fragile: Electronic Components</p>
+</div>
+</div>
+<div class="px-lg pb-lg space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">DESTINATION WORKSTATION</label>
+<select class="w-full h-touch-target text-body-lg px-md bg-surface-container border border-outline rounded-lg">
+<option>Packing Station 01</option>
+<option>Packing Station 02</option>
+<option>Quality Assurance</option>
+<option>Returns Processing</option>
+</select>
+</div>
+<div class="p-lg bg-surface-container-low flex gap-md">
+<button class="flex-1 h-touch-target font-label-md text-label-md text-on-surface-variant bg-surface-container-high rounded-lg" onclick="closeModals()">CANCEL</button>
+<button class="flex-[2] h-touch-target font-label-md text-label-md bg-primary text-on-primary rounded-lg shadow-lg" onclick="closeModals()">CONFIRM PICKUP</button>
+</div>
+</div>
+</div>
+<script>
+        function openModal(type, bin) {
+            if (type === 'book-in') {
+                document.getElementById('target-bin-in').textContent = bin;
+                document.getElementById('modal-book-in').classList.remove('hidden');
+            } else {
+                document.getElementById('target-bin-out').textContent = bin;
+                document.getElementById('modal-book-out').classList.remove('hidden');
+            }
+        }
+
+        function closeModals() {
+            document.getElementById('modal-book-in').classList.add('hidden');
+            document.getElementById('modal-book-out').classList.add('hidden');
+        }
+
+        function selectZone(name) {
+            // Simplified feedback for tablet use
+            console.log("Switching to Zone: " + name);
+            // Visual feedback loop
+            document.querySelectorAll('section button').forEach(btn => {
+                btn.classList.replace('bg-secondary-container', 'bg-surface-container-high');
+                btn.classList.replace('text-on-secondary-container', 'text-on-surface-variant');
+                btn.classList.remove('border-2', 'border-secondary');
+                btn.classList.add('border', 'border-outline-variant');
+            });
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.replace('bg-surface-container-high', 'bg-secondary-container');
+            activeBtn.classList.replace('text-on-surface-variant', 'text-on-secondary-container');
+            activeBtn.classList.add('border-2', 'border-secondary');
+            activeBtn.classList.remove('border', 'border-outline-variant');
+        }
+    </script>
+</body></html>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WMS Grid Locator - Zone F</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        .shelf-cell {
+            box-shadow: inset 0 -2px 0 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.05);
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .shelf-cell:active {
+            box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.2);
+            transform: scale(0.96);
+        }
+        /* Custom scrollbar for warehouse density */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9ff",
+                        "primary-container": "#1e293b",
+                        "surface-container": "#e5eeff",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#bcc7de",
+                        "secondary-fixed": "#ffdbca",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#002109",
+                        "primary": "#091426",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-secondary-fixed": "#341100",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#dce9ff",
+                        "inverse-surface": "#213145",
+                        "on-primary-fixed": "#111c2d",
+                        "inverse-on-surface": "#eaf1ff",
+                        "inverse-primary": "#bcc7de",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary-container": "#003010",
+                        "primary-fixed": "#d8e3fb",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "background": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-secondary-container": "#5c2400",
+                        "on-surface": "#0b1c30",
+                        "secondary-fixed-dim": "#ffb690",
+                        "tertiary": "#001906",
+                        "on-tertiary-container": "#00a64a",
+                        "outline-variant": "#c5c6cd",
+                        "surface-variant": "#d3e4fe",
+                        "secondary": "#9d4300",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#45474c",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#545f73",
+                        "outline": "#75777d",
+                        "on-secondary-fixed-variant": "#783200",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-container": "#fd761a",
+                        "on-primary-container": "#8590a6",
+                        "on-background": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "base": "4px",
+                        "touch-target": "48px",
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "code-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target bg-primary dark:bg-primary shadow-sm border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<span class="text-title-lg font-title-lg font-bold text-on-primary">WMS Grid Locator</span>
+</div>
+<div class="hidden md:flex items-center gap-xl h-full">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-primary-container">search</span>
+<input class="bg-primary-container text-on-primary border-none rounded-lg pl-xl pr-md py-xs w-64 focus:ring-2 focus:ring-secondary text-label-md font-label-md placeholder-on-primary-container" placeholder="Find location or batch..." type="text"/>
+</div>
+<nav class="flex h-full">
+<a class="text-on-primary-container hover:bg-primary-container px-md flex items-center transition-colors h-full font-label-md text-label-md" href="#">Inventory</a>
+<a class="text-on-primary border-b-2 border-secondary hover:bg-primary-container px-md flex items-center transition-colors h-full font-label-md text-label-md" href="#">Zones</a>
+<a class="text-on-primary-container hover:bg-primary-container px-md flex items-center transition-colors h-full font-label-md text-label-md" href="#">Logistics</a>
+</nav>
+<button class="text-on-primary hover:bg-primary-container p-xs rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar (Hidden on small/medium) -->
+<aside class="hidden lg:flex flex-col h-screen fixed left-0 top-0 pt-touch-target w-64 bg-surface-container-low border-r border-outline-variant z-40">
+<div class="p-md flex items-center gap-md border-b border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-sm">ZA</div>
+<div>
+<p class="font-headline-md text-headline-md text-primary leading-tight">WMS Admin</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Zone Alpha-9</p>
+</div>
+</div>
+<nav class="mt-md flex-1">
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">inventory_2</span> Inventory
+            </a>
+<a class="bg-secondary-container text-on-secondary-container rounded-lg mx-2 my-1 flex items-center gap-sm px-md py-sm shadow-inner scale-[0.98] font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">grid_view</span> Zones
+            </a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">group</span> Users
+            </a>
+</nav>
+<div class="p-md border-t border-outline-variant/30">
+<button class="w-full bg-secondary text-on-secondary py-sm rounded-xl font-bold flex items-center justify-center gap-sm shadow-md hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">barcode_scanner</span> Quick Scan
+            </button>
+<div class="mt-md">
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-xs hover:bg-surface-container-high rounded-lg font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                </a>
+<a class="text-on-surface-variant flex items-center gap-sm px-md py-xs hover:bg-surface-container-high rounded-lg font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">help</span> Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="lg:pl-64 pt-touch-target pb-24 md:pb-0 min-h-screen">
+<div class="max-w-[1440px] mx-auto p-container-margin">
+<!-- Breadcrumb and View Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-lg gap-md">
+<div>
+<nav class="flex items-center gap-xs text-on-surface-variant mb-xs">
+<span class="font-label-md text-label-md">Warehouse</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="font-label-md text-label-md text-secondary">Zone F</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="font-label-md text-label-md font-bold">F03</span>
+</nav>
+<h1 class="font-headline-lg text-headline-lg text-primary">Shelf Grid View</h1>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex bg-surface-container-high p-1 rounded-lg">
+<button class="bg-surface-container-lowest text-primary px-md py-xs rounded-md shadow-sm font-label-md text-label-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">grid_on</span> Grid
+                        </button>
+<button class="text-on-surface-variant px-md py-xs rounded-md font-label-md text-label-md flex items-center gap-xs hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[18px]">list</span> List
+                        </button>
+</div>
+</div>
+</div>
+<!-- Shelf Horizontal Tabs -->
+<div class="overflow-x-auto no-scrollbar flex gap-xs mb-lg pb-base">
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border border-outline bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">F01</button>
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border border-outline bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">F02</button>
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border-2 border-secondary bg-secondary-container text-on-secondary-container font-bold shadow-sm">F03</button>
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border border-outline bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">F04</button>
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border border-outline bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">F05</button>
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border border-outline bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">F06</button>
+<button class="flex-shrink-0 px-xl py-sm rounded-xl border border-outline bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">F07</button>
+</div>
+<!-- Legend & Stats -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md mb-lg flex flex-wrap gap-xl items-center shadow-sm">
+<div class="flex items-center gap-sm">
+<div class="w-4 h-4 rounded-sm bg-tertiary-container border border-tertiary"></div>
+<span class="font-label-md text-label-md uppercase">Empty</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-4 h-4 rounded-sm bg-error-container border border-error"></div>
+<span class="font-label-md text-label-md uppercase">Occupied</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-4 h-4 rounded-sm bg-secondary-container border-2 border-secondary"></div>
+<span class="font-label-md text-label-md uppercase">Selected</span>
+</div>
+<div class="ml-auto flex items-center gap-md">
+<div class="text-right">
+<p class="text-label-md text-on-surface-variant font-normal">Zone Capacity</p>
+<div class="w-32 h-2 bg-surface-variant rounded-full mt-1">
+<div class="w-3/4 h-full bg-secondary rounded-full"></div>
+</div>
+</div>
+<span class="font-title-lg text-title-lg text-primary font-bold">75%</span>
+</div>
+</div>
+<!-- Shelf Grid -->
+<div class="bg-surface-container-low rounded-2xl border border-outline-variant p-lg shadow-md overflow-x-auto">
+<div class="grid grid-cols-[auto_repeat(12,_1fr)] gap-md min-w-[1000px]">
+<!-- Column Headers (Sections) -->
+<div class="w-12 h-8"></div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-01</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-02</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-03</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-04</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-05</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-06</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-07</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-08</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-09</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-10</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-11</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant">SEC-12</div>
+<!-- Grid Rows (Levels) -->
+<!-- Row 05 -->
+<div class="flex items-center justify-end pr-sm font-bold text-primary">05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">01-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">02-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">03-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">04-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">05-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">06-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">07-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">08-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">09-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">10-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">11-05</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">12-05</div>
+<!-- Row 04 -->
+<div class="flex items-center justify-end pr-sm font-bold text-primary">04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">01-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-secondary-container border-2 border-secondary shadow-inner flex items-center justify-center text-on-secondary-container font-code-md text-code-md cursor-pointer animate-pulse">02-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">03-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">04-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">05-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">06-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">07-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">08-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">09-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">10-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">11-04</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">12-04</div>
+<!-- Row 03 -->
+<div class="flex items-center justify-end pr-sm font-bold text-primary">03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">01-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">02-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">03-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">04-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">05-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">06-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">07-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">08-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">09-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">10-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">11-03</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">12-03</div>
+<!-- Row 02 -->
+<div class="flex items-center justify-end pr-sm font-bold text-primary">02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">01-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">02-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">03-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">04-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">05-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">06-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">07-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">08-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">09-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">10-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">11-02</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">12-02</div>
+<!-- Row 01 -->
+<div class="flex items-center justify-end pr-sm font-bold text-primary">01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">01-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">02-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">03-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">04-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">05-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">06-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">07-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">08-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-error-container border border-error flex items-center justify-center text-on-error-container font-code-md text-code-md cursor-pointer hover:brightness-95">09-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">10-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">11-01</div>
+<div class="shelf-cell w-full aspect-square max-w-[64px] rounded-lg bg-tertiary-container border border-tertiary flex items-center justify-center text-on-tertiary-container font-code-md text-code-md cursor-pointer hover:brightness-95">12-01</div>
+</div>
+</div>
+<!-- Details Panel (Asymmetric Layout Component) -->
+<div class="mt-lg grid grid-cols-1 md:grid-cols-3 gap-lg">
+<div class="md:col-span-2 bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant shadow-sm flex flex-col md:flex-row gap-lg">
+<div class="md:w-1/3 aspect-square rounded-xl bg-surface-variant flex items-center justify-center relative overflow-hidden group">
+<img alt="Pallet detail" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" data-alt="A high-resolution industrial close-up of a wooden pallet stacked with pristine white cardboard boxes, secured by professional-grade clear stretch wrap. The lighting is bright and clinical, emphasizing a clean warehouse environment with cool blue and slate grey tones. In the background, out-of-focus industrial racking creates a sense of depth and organization in a modern logistics center." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfumXPhFHPlPi7RxPm1flTH8aC5VyXpXGmBHCyf2Ttq4YC2mnVzCRKCW-sViHAgQE3Fs0n7T5UkE2arao5stOu6zOjDIYtzxcGCskFY7ZglDzE-UNbfh6bhy58I8nYjkOtvBUBfAhubHgNYdz_nrUUwOuLFlpIh-E-xhh27bOl572F8rlomQgYeO5NvC1NE8NNhHAI-8X54apZKuq7I7Byw1C4bCziQCjwSyNC7W6WVzHHBuIqnoS9-xfRrRcDzZLZWv4Przws_Q3R"/>
+<div class="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-primary text-[48px]">zoom_in</span>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Location F03-02-04</h3>
+<p class="text-on-surface-variant font-label-md text-label-md">Assigned Batch: #BATCH-88291-ZX</p>
+</div>
+<span class="px-md py-xs rounded-full bg-error-container text-on-error-container font-bold text-label-md uppercase">Occupied</span>
+</div>
+<div class="grid grid-cols-2 gap-md mb-lg">
+<div class="p-sm bg-surface-container rounded-lg">
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Item Type</p>
+<p class="font-bold text-primary">Electronic Components</p>
+</div>
+<div class="p-sm bg-surface-container rounded-lg">
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Weight</p>
+<p class="font-bold text-primary">450.5 kg</p>
+</div>
+<div class="p-sm bg-surface-container rounded-lg">
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Arrival</p>
+<p class="font-bold text-primary">Oct 12, 08:45 AM</p>
+</div>
+<div class="p-sm bg-surface-container rounded-lg">
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Exp. Dispatch</p>
+<p class="font-bold text-primary">Oct 15, 2023</p>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 bg-primary text-on-primary py-sm rounded-lg font-bold flex items-center justify-center gap-xs hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span> Edit Details
+                            </button>
+<button class="flex-1 border border-outline text-primary py-sm rounded-lg font-bold flex items-center justify-center gap-xs hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">move_to_inbox</span> Re-locate
+                            </button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant shadow-sm">
+<h3 class="font-title-lg text-title-lg text-primary mb-md">Quick Actions</h3>
+<div class="space-y-sm">
+<button class="w-full p-md bg-surface-container-low border border-outline-variant rounded-xl flex items-center gap-md hover:bg-surface-container-highest transition-all group">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">print</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-primary leading-none">Print Label</p>
+<p class="text-xs text-on-surface-variant mt-1">Generate ZPL for Location</p>
+</div>
+</button>
+<button class="w-full p-md bg-surface-container-low border border-outline-variant rounded-xl flex items-center gap-md hover:bg-surface-container-highest transition-all group">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">inventory</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-primary leading-none">Stock Check</p>
+<p class="text-xs text-on-surface-variant mt-1">Initiate cycle count task</p>
+</div>
+</button>
+<button class="w-full p-md bg-surface-container-low border border-outline-variant rounded-xl flex items-center gap-md hover:bg-surface-container-highest transition-all group">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-primary leading-none">Flag Issue</p>
+<p class="text-xs text-on-surface-variant mt-1">Report damage or spill</p>
+</div>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-touch-target px-xs pb-safe bg-surface-container-highest border-t border-outline-variant shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-md text-[10px]" href="#">
+<span class="material-symbols-outlined">home</span>
+<span>Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary text-on-secondary rounded-xl px-4 py-1 scale-90 transition-transform duration-150 font-label-md text-[10px]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_on</span>
+<span>Grid</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-md text-[10px]" href="#">
+<span class="material-symbols-outlined">barcode_scanner</span>
+<span>Scan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-md text-[10px]" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for shelf cells
+        document.querySelectorAll('.shelf-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                // Simplified selection logic
+                document.querySelectorAll('.shelf-cell').forEach(c => {
+                    if (c.classList.contains('bg-secondary-container')) {
+                        c.classList.remove('bg-secondary-container', 'border-2', 'border-secondary', 'shadow-inner', 'animate-pulse');
+                        c.classList.add(c.dataset.originalColor || 'bg-tertiary-container');
+                    }
+                });
+                
+                // Save original color if not already saved
+                if (!cell.dataset.originalColor) {
+                    if (cell.classList.contains('bg-tertiary-container')) cell.dataset.originalColor = 'bg-tertiary-container';
+                    else if (cell.classList.contains('bg-error-container')) cell.dataset.originalColor = 'bg-error-container';
+                }
+
+                cell.classList.remove('bg-tertiary-container', 'bg-error-container');
+                cell.classList.add('bg-secondary-container', 'border-2', 'border-secondary', 'shadow-inner');
+            });
+        });
+
+        // Search bar interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-105');
+            searchInput.parentElement.classList.add('transition-transform');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-105');
+        });
+    </script>
+</body></html>
