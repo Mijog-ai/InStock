@@ -176,6 +176,15 @@ class WmsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    suspend fun getErpDeliveries(): List<ErpDelivery> {
+        return try {
+            repo.getErpDeliveries()
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "getErpDeliveries failed", e)
+            emptyList()
+        }
+    }
+
     fun clearActionMessage() {
         _state.value = _state.value.copy(actionMessage = null)
     }

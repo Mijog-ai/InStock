@@ -10,9 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.text.KeyboardOptions
 import com.wms.gridlocator.data.Booking
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.WmsViewModel
@@ -167,7 +169,8 @@ private fun BatchCard(booking: Booking, viewModel: WmsViewModel) {
                         onValueChange = { consumeQty = it.filter { c -> c.isDigit() } },
                         label = { Text("Qty") },
                         modifier = Modifier.weight(1f).height(56.dp),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                     Button(
                         onClick = {

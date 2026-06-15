@@ -178,7 +178,7 @@ body { font-family: 'Inter', sans-serif; margin: 0; }
   <div class="flex items-center gap-xl">
     <div class="relative">
       <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-primary-container">search</span>
-      <input class="bg-primary-container text-on-primary border-none rounded-lg pl-xl pr-md py-xs w-64 focus:ring-2 focus:ring-secondary text-label-md font-label-md placeholder-on-primary-container" placeholder="Find location or batch..." type="text" id="global-search" onkeydown="if(event.key==='Enter')doSearch()"/>
+      <input class="bg-primary-container text-on-primary border-none rounded-lg pl-xl pr-md py-xs w-64 focus:ring-2 focus:ring-secondary text-label-md font-label-md placeholder-on-primary-container" placeholder="Find location or PO#..." type="text" id="global-search" onkeydown="if(event.key==='Enter')doSearch()"/>
     </div>
     <div class="flex flex-col items-end">
       <span class="font-label-md text-label-md" id="header-username"></span>
@@ -241,7 +241,7 @@ body { font-family: 'Inter', sans-serif; margin: 0; }
             <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Location</th>
             <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Action</th>
             <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Item No.</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Batch</th>
+            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">PO#</th>
             <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Qty</th>
             <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">User</th>
             <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Timestamp</th>
@@ -390,8 +390,8 @@ body { font-family: 'Inter', sans-serif; margin: 0; }
     </div>
     <div class="grid grid-cols-2 gap-md">
       <div class="flex flex-col gap-xs">
-        <label class="font-label-md text-label-md text-on-surface-variant">Batch Number</label>
-        <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md" placeholder="B-2026-001" type="text" id="book-batch" required/>
+        <label class="font-label-md text-label-md text-on-surface-variant">PO# (Purchase Order)</label>
+        <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md" placeholder="PO-2026-001" type="text" id="book-batch" required/>
       </div>
       <div class="flex flex-col gap-xs">
         <label class="font-label-md text-label-md text-on-surface-variant">Quantity</label>
@@ -690,7 +690,7 @@ async function openCellDetails(locCode) {
             <span class="font-title-lg text-title-lg text-primary">${b.item_number}</span>
           </div>
           <div class="text-right">
-            <span class="font-label-md text-label-md text-on-surface-variant opacity-70 block">Batch</span>
+            <span class="font-label-md text-label-md text-on-surface-variant opacity-70 block">PO#</span>
             <span class="font-code-md text-code-md bg-surface-container px-sm py-1 rounded">${b.batch_number}</span>
           </div>
         </div>
@@ -804,7 +804,7 @@ async function openBookingModal(locCode) {
             <tr class="cursor-pointer hover:bg-secondary-container/40 transition-colors border-t border-outline-variant/50 erp-row"
                 onclick="selectErpDelivery(${i})"
                 data-item="${(d.ITEMNUMBER||'').replace(/"/g,'&quot;')}"
-                data-batch="${(d.DELIVERYNOTE||'').replace(/"/g,'&quot;')}"
+                data-batch="${(d.PURCHASENUMBER||'').replace(/"/g,'&quot;')}"
                 data-qty="${d.ORDERED||1}"
                 data-desc="${(d.NAME||'').replace(/"/g,'&quot;')} | PO: ${(d.PURCHASENUMBER||'').replace(/"/g,'&quot;')} | ExtRef: ${(d.EXTERNALDELIVERYNOTE||'').replace(/"/g,'&quot;')}">
               <td class="px-sm py-xs font-medium text-primary">${d.ITEMNUMBER||''}</td>
@@ -931,7 +931,7 @@ async function doSearch() {
       <div class="flex flex-col items-center justify-center py-xl opacity-60">
         <span class="material-symbols-outlined text-[64px] mb-md text-outline">search_off</span>
         <p class="font-title-lg text-title-lg text-primary">No results found</p>
-        <p class="text-on-surface-variant mt-xs">Try a different location code, item number, or batch</p>
+        <p class="text-on-surface-variant mt-xs">Try a different location code, item number, or PO#</p>
       </div>`;
     return;
   }
@@ -942,7 +942,7 @@ async function doSearch() {
         <tr class="bg-surface-container-high text-left">
           <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant rounded-tl-lg">Location</th>
           <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Item</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Batch</th>
+          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">PO#</th>
           <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Type</th>
           <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Description</th>
           <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant text-right">Qty</th>

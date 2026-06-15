@@ -16,7 +16,7 @@ CONN_STRING = (
     'PWD=XAL_ODBC'
 )
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SQLITE_DB_PATH = os.path.join(_ROOT, "database", "xal_local1.db")
 
 FORCE_SQLITE = os.environ.get("PLANNER_FORCE_SQLITE") == "1"

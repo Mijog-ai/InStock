@@ -126,6 +126,24 @@ class Repository {
         return true
     }
 
+    // ── ERP deliveries (synced from desktop via Firestore) ──
+
+    suspend fun getErpDeliveries(): List<ErpDelivery> {
+        val snap = db.collection("erp_deliveries").get().await()
+        return snap.documents.map { doc ->
+            val d = doc.data ?: emptyMap()
+            ErpDelivery(
+                itemNumber = d["ITEMNUMBER"] as? String ?: "",
+                purchaseNumber = d["PURCHASENUMBER"] as? String ?: "",
+                ordered = (d["ORDERED"] as? Number)?.toDouble() ?: 0.0,
+                deliveryNote = d["DELIVERYNOTE"] as? String ?: "",
+                externalDeliveryNote = d["EXTERNALDELIVERYNOTE"] as? String ?: "",
+                supplierName = d["NAME"] as? String ?: "",
+                deliveryDate = d["DELIVERYDATE"] as? String ?: ""
+            )
+        }.sortedByDescending { it.deliveryDate }
+    }
+
     // ── Zone queries — single-field query + client-side prefix filter ──
 
     suspend fun getZoneOccupancy(shelfCodes: List<String>): Int {

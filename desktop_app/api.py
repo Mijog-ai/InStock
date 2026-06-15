@@ -82,7 +82,12 @@ class WmsApi:
         return repo.search_bookings(query)
 
     def get_erp_deliveries(self):
-        return erp.get_recent_deliveries()
+        deliveries = erp.get_recent_deliveries()
+        try:
+            erp.sync_deliveries_to_firestore()
+        except Exception as e:
+            print(f"[ERP] Firestore sync failed: {e}")
+        return deliveries
 
     def get_all_users(self):
         return repo.get_all_users()

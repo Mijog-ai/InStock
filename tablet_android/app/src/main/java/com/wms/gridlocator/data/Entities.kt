@@ -28,3 +28,13 @@ data class Movement(
     val user: String = "",
     val timestamp: String = ""
 )
+
+data class ErpDelivery(
+    val itemNumber: String = "",
+    val purchaseNumber: String = "",
+    val ordered: Double = 0.0,
+    val deliveryNote: String = "",
+    val externalDeliveryNote: String = "",
+    val supplierName: String = "",
+    val deliveryDate: String = ""
+)
