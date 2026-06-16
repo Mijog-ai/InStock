@@ -1,17 +1,21 @@
-"""Grid config loader — reads from Firestore grid_config collection."""
-from firestore_client import db
+"""Grid config loader — reads from local grid_config.json file."""
+import json
+import os
+
+import sys
 
 _config = None
+if getattr(sys, 'frozen', False):
+    _CONFIG_PATH = os.path.join(sys._MEIPASS, "grid_config.json")
+else:
+    _CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "grid_config.json")
 
 
 def load_config():
     global _config
     if _config is None:
-        doc = db.collection("app_config").document("grid_config").get()
-        if doc.exists:
-            _config = doc.to_dict()
-        else:
-            _config = {"max_slots_per_cell": 2, "zones": {}}
+        with open(_CONFIG_PATH, "r") as f:
+            _config = json.load(f)
     return _config
 
 

@@ -75,19 +75,33 @@ class WmsApi:
         ok = repo.consume(booking_id, qty, self._username)
         return {"ok": ok}
 
+    def revert_consume(self, journal_id):
+        ok = repo.revert_consume(journal_id, self._username)
+        return {"ok": ok}
+
     def get_recent_movements(self, limit=20):
         return repo.get_recent_movements(limit)
+
+    def get_recent_inputs(self, limit=15):
+        return repo.get_recent_inputs(limit)
+
+    def get_recent_consumes(self, limit=15):
+        return repo.get_recent_consumes(limit)
 
     def search(self, query):
         return repo.search_bookings(query)
 
+    def search_fifo(self, item_number):
+        return repo.search_fifo(item_number)
+
+    def consume_fifo(self, plan):
+        """plan is a list of {booking_id, qty} dicts."""
+        for item in plan:
+            repo.consume(item["booking_id"], item["qty"], self._username)
+        return {"ok": True}
+
     def get_erp_deliveries(self):
-        deliveries = erp.get_recent_deliveries()
-        try:
-            erp.sync_deliveries_to_firestore()
-        except Exception as e:
-            print(f"[ERP] Firestore sync failed: {e}")
-        return deliveries
+        return erp.get_recent_deliveries()
 
     def get_all_users(self):
         return repo.get_all_users()

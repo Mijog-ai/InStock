@@ -1,194 +1,299 @@
-"""WMS data layer — Firestore backend."""
-from datetime import datetime
-from firestore_client import db
-from google.cloud.firestore_v1 import FieldFilter
+"""WMS data layer — SQL Server backend (Rohteillager database)."""
+from datetime import date, datetime
+from sql_client import get_cursor
 
+
+def _strip(val):
+    return val.strip() if isinstance(val, str) else val
+
+
+def _row_to_booking(row, columns):
+    raw = dict(zip(columns, row))
+    return {
+        "id": str(raw["Rownumber"]),
+        "location_code": _strip(raw.get("Lagerort", "")),
+        "item_number": _strip(raw.get("Artikelnummer", "")),
+        "item_type": _strip(raw.get("Art", "")),
+        "batch_number": _strip(raw.get("Lieferschein", "")),
+        "qty": int(_strip(raw.get("Menge", "0")) or 0),
+        "description": _strip(raw.get("Bezeichnung", "")),
+        "booked_by": _strip(raw.get("Zusatz1", "")),
+        "booked_at": raw["Datum"].isoformat() if isinstance(raw.get("Datum"), (date, datetime)) else str(raw.get("Datum", "")),
+        "status": "Active",
+        "batch_charge": _strip(raw.get("Chargennummer", "")),
+    }
+
+
+def _row_to_movement(row, columns):
+    raw = dict(zip(columns, row))
+    return {
+        "id": str(raw["Rownumber"]),
+        "action": _strip(raw.get("Bemerkung", "")),
+        "location_code": _strip(raw.get("Lagerort", "")),
+        "item_number": _strip(raw.get("Artikelnummer", "")),
+        "item_type": _strip(raw.get("Art", "")),
+        "batch_number": _strip(raw.get("Lieferschein", "")),
+        "qty": int(_strip(raw.get("Menge", "0")) or 0),
+        "user": _strip(raw.get("Zusatz1", "")),
+        "timestamp": raw["Datum"].isoformat() if isinstance(raw.get("Datum"), (date, datetime)) else str(raw.get("Datum", "")),
+        "description": _strip(raw.get("Bezeichnung", "")),
+    }
+
+
+def _columns(cursor):
+    return [desc[0] for desc in cursor.description]
+
+
+# ── Users ──
 
 def init_db():
-    pass
+    with get_cursor() as cur:
+        cur.execute("""
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'users')
+            CREATE TABLE users (
+                username NCHAR(20) NOT NULL PRIMARY KEY,
+                password_hash NVARCHAR(200) NOT NULL,
+                role NCHAR(20) NOT NULL
+            )
+        """)
 
 
 def get_user(username):
-    doc = db.collection("users").document(username).get()
-    if doc.exists:
-        data = doc.to_dict()
-        data["id"] = doc.id
-        return data
-    return None
+    with get_cursor() as cur:
+        cur.execute("SELECT username, password_hash, role FROM users WHERE RTRIM(username) = ?", username)
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return {
+            "id": _strip(row[0]),
+            "username": _strip(row[0]),
+            "password_hash": _strip(row[1]),
+            "role": _strip(row[2]),
+        }
 
 
 def get_all_users():
-    docs = db.collection("users").stream()
-    result = []
-    for doc in docs:
-        d = doc.to_dict()
-        result.append({"id": doc.id, "username": d.get("username", doc.id), "role": d.get("role", "")})
-    return sorted(result, key=lambda u: u["username"])
+    with get_cursor() as cur:
+        cur.execute("SELECT username, role FROM users ORDER BY username")
+        return [
+            {"id": _strip(r[0]), "username": _strip(r[0]), "role": _strip(r[1])}
+            for r in cur.fetchall()
+        ]
 
 
 def create_user(username, password_hash, role):
-    db.collection("users").document(username).set({
-        "username": username,
-        "password_hash": password_hash,
-        "role": role,
-    })
+    with get_cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                     username, password_hash, role)
 
 
 def update_user(user_id, username=None, password_hash=None, role=None):
-    updates = {}
+    parts, params = [], []
     if username:
-        updates["username"] = username
+        parts.append("username = ?")
+        params.append(username)
     if password_hash:
-        updates["password_hash"] = password_hash
+        parts.append("password_hash = ?")
+        params.append(password_hash)
     if role:
-        updates["role"] = role
-    if updates:
-        db.collection("users").document(user_id).update(updates)
+        parts.append("role = ?")
+        params.append(role)
+    if not parts:
+        return
+    params.append(user_id)
+    with get_cursor() as cur:
+        cur.execute(f"UPDATE users SET {', '.join(parts)} WHERE RTRIM(username) = ?", *params)
 
 
 def delete_user(user_id):
-    db.collection("users").document(user_id).delete()
+    with get_cursor() as cur:
+        cur.execute("DELETE FROM users WHERE RTRIM(username) = ?", user_id)
 
+
+# ── Inventory (rohteillager) ──
 
 def get_cell_contents(location_code):
-    docs = (
-        db.collection("bookings")
-        .where(filter=FieldFilter("location_code", "==", location_code))
-        .where(filter=FieldFilter("status", "==", "Active"))
-        .stream()
-    )
-    result = []
-    for doc in docs:
-        d = doc.to_dict()
-        d["id"] = doc.id
-        result.append(d)
-    result.sort(key=lambda x: x.get("booked_at", ""))
-    return result
+    with get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM rohteillager WHERE RTRIM(Lagerort) = ? AND CAST(RTRIM(Menge) AS INT) > 0",
+            location_code,
+        )
+        cols = _columns(cur)
+        return sorted(
+            [_row_to_booking(r, cols) for r in cur.fetchall()],
+            key=lambda x: x.get("booked_at", ""),
+        )
 
 
 def get_active_slot_count(location_code):
-    docs = (
-        db.collection("bookings")
-        .where(filter=FieldFilter("location_code", "==", location_code))
-        .where(filter=FieldFilter("status", "==", "Active"))
-        .stream()
-    )
-    return sum(1 for _ in docs)
+    with get_cursor() as cur:
+        cur.execute(
+            "SELECT COUNT(*) FROM rohteillager WHERE RTRIM(Lagerort) = ? AND CAST(RTRIM(Menge) AS INT) > 0",
+            location_code,
+        )
+        return cur.fetchone()[0]
 
 
 def book_in(location_code, item_number, item_type, batch_number, qty, description, user):
-    now = datetime.now().isoformat(timespec="seconds")
-    booking_ref = db.collection("bookings").document()
-    booking_ref.set({
-        "location_code": location_code,
-        "item_number": item_number,
-        "item_type": item_type,
-        "batch_number": batch_number,
-        "qty": qty,
-        "description": description,
-        "booked_by": user,
-        "booked_at": now,
-        "status": "Active",
-    })
-    db.collection("movements").add({
-        "booking_id": booking_ref.id,
-        "action": "BookIn",
-        "qty": qty,
-        "user": user,
-        "timestamp": now,
-    })
-    return booking_ref.id
+    with get_cursor() as cur:
+        cur.execute(
+            """INSERT INTO rohteillager
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?)""",
+            item_number[:20], description[:40], location_code[:20], str(qty)[:10], item_type[:20], batch_number[:20], user[:20],
+        )
+        cur.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cur.fetchone()[0]
+        booking_id = str(int(new_id)) if new_id else "0"
+
+        cur.execute(
+            """INSERT INTO journal
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)""",
+            item_number[:20], description[:40], location_code[:20], str(qty)[:10], item_type[:20], batch_number[:20], user[:20],
+            f"Ein {qty} Stk"[:20],
+        )
+        return booking_id
 
 
 def consume(booking_id, qty, user):
-    now = datetime.now().isoformat(timespec="seconds")
-    ref = db.collection("bookings").document(booking_id)
-    doc = ref.get()
-    if not doc.exists:
-        return False
-    data = doc.to_dict()
-    if data.get("status") != "Active":
-        return False
-    new_qty = data["qty"] - qty
-    if new_qty <= 0:
-        ref.update({"qty": 0, "status": "Consumed"})
-        consumed_qty = data["qty"]
-    else:
-        ref.update({"qty": new_qty})
-        consumed_qty = qty
-    db.collection("movements").add({
-        "booking_id": booking_id,
-        "action": "Consume",
-        "qty": consumed_qty,
-        "user": user,
-        "timestamp": now,
-    })
-    return True
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM rohteillager WHERE Rownumber = ?", int(booking_id))
+        cols = _columns(cur)
+        row = cur.fetchone()
+        if row is None:
+            return False
+        booking = _row_to_booking(row, cols)
+        current_qty = booking["qty"]
+        new_qty = current_qty - qty
+        consumed_qty = qty if new_qty > 0 else current_qty
 
+        if new_qty <= 0:
+            cur.execute("DELETE FROM rohteillager WHERE Rownumber = ?", int(booking_id))
+        else:
+            cur.execute(
+                "UPDATE rohteillager SET Menge = ? WHERE Rownumber = ?",
+                str(new_qty), int(booking_id),
+            )
+
+        cur.execute(
+            """INSERT INTO journal
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)""",
+            booking["item_number"][:20], booking["description"][:40], booking["location_code"][:20],
+            str(consumed_qty)[:10], booking["item_type"][:20], booking["batch_number"][:20], user[:20],
+            f"Aus -{consumed_qty} Stk"[:20],
+        )
+        return True
+
+
+# ── Zone / shelf queries ──
 
 def get_zone_occupancy(zone_code, shelf_codes):
-    """Count occupied cells across all shelves in a zone. Uses single-field query + client filter."""
-    all_active = (
-        db.collection("bookings")
-        .where(filter=FieldFilter("status", "==", "Active"))
-        .stream()
-    )
-    prefixes = tuple(f"{sc}-" for sc in shelf_codes)
-    occupied = set()
-    for doc in all_active:
-        loc = doc.to_dict().get("location_code", "")
-        if loc.startswith(prefixes):
-            occupied.add(loc)
-    return len(occupied)
+    if not shelf_codes:
+        return 0
+    placeholders = " OR ".join(["RTRIM(Lagerort) LIKE ?"] * len(shelf_codes))
+    params = [f"{sc}-%" for sc in shelf_codes]
+    with get_cursor() as cur:
+        cur.execute(
+            f"""SELECT COUNT(DISTINCT RTRIM(Lagerort))
+                FROM rohteillager
+                WHERE CAST(RTRIM(Menge) AS INT) > 0 AND ({placeholders})""",
+            *params,
+        )
+        return cur.fetchone()[0]
 
 
 def get_occupied_cells(shelf_code):
-    """Get occupied cells for a specific shelf. Uses single-field query + client filter."""
-    all_active = (
-        db.collection("bookings")
-        .where(filter=FieldFilter("status", "==", "Active"))
-        .stream()
-    )
-    prefix = f"{shelf_code}-"
-    return list({doc.to_dict()["location_code"] for doc in all_active if doc.to_dict().get("location_code", "").startswith(prefix)})
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT DISTINCT RTRIM(Lagerort)
+               FROM rohteillager
+               WHERE RTRIM(Lagerort) LIKE ? AND CAST(RTRIM(Menge) AS INT) > 0""",
+            f"{shelf_code}-%",
+        )
+        return [row[0] for row in cur.fetchall()]
 
+
+# ── Audit / journal ──
 
 def get_recent_movements(limit=20):
-    docs = (
-        db.collection("movements")
-        .order_by("timestamp", direction="DESCENDING")
-        .limit(limit)
-        .stream()
-    )
-    results = []
-    for doc in docs:
-        m = doc.to_dict()
-        m["id"] = doc.id
-        booking_doc = db.collection("bookings").document(m["booking_id"]).get()
-        if booking_doc.exists:
-            b = booking_doc.to_dict()
-            m["location_code"] = b.get("location_code", "")
-            m["item_number"] = b.get("item_number", "")
-            m["batch_number"] = b.get("batch_number", "")
-        results.append(m)
-    return results
+    with get_cursor() as cur:
+        cur.execute(f"SELECT TOP {int(limit)} * FROM journal ORDER BY Rownumber DESC")
+        cols = _columns(cur)
+        return [_row_to_movement(r, cols) for r in cur.fetchall()]
 
+
+def get_recent_inputs(limit=20):
+    with get_cursor() as cur:
+        cur.execute(
+            f"SELECT TOP {int(limit)} * FROM journal WHERE RTRIM(Bemerkung) LIKE 'Ein%' ORDER BY Rownumber DESC"
+        )
+        cols = _columns(cur)
+        return [_row_to_movement(r, cols) for r in cur.fetchall()]
+
+
+def get_recent_consumes(limit=20):
+    with get_cursor() as cur:
+        cur.execute(
+            f"SELECT TOP {int(limit)} * FROM journal WHERE RTRIM(Bemerkung) LIKE 'Aus%' ORDER BY Rownumber DESC"
+        )
+        cols = _columns(cur)
+        return [_row_to_movement(r, cols) for r in cur.fetchall()]
+
+
+# ── Revert consume ──
+
+def revert_consume(journal_id, user):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM journal WHERE Rownumber = ?", int(journal_id))
+        cols = _columns(cur)
+        row = cur.fetchone()
+        if row is None:
+            return False
+        m = _row_to_movement(row, cols)
+
+        cur.execute(
+            """INSERT INTO rohteillager
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?)""",
+            m["item_number"][:20], m["description"][:40], m["location_code"][:20],
+            str(m["qty"])[:10], m["item_type"][:20], m["batch_number"][:20], user[:20],
+        )
+
+        cur.execute("DELETE FROM journal WHERE Rownumber = ?", int(journal_id))
+        return True
+
+
+# ── FIFO lookup ──
+
+def search_fifo(item_number):
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT * FROM rohteillager
+               WHERE RTRIM(Artikelnummer) = ? AND CAST(RTRIM(Menge) AS INT) > 0
+               ORDER BY Datum ASC, Rownumber ASC""",
+            item_number,
+        )
+        cols = _columns(cur)
+        return [_row_to_booking(r, cols) for r in cur.fetchall()]
+
+
+# ── Search ──
 
 def search_bookings(query):
-    q_lower = query.lower()
-    docs = (
-        db.collection("bookings")
-        .where(filter=FieldFilter("status", "==", "Active"))
-        .stream()
-    )
-    results = []
-    for doc in docs:
-        d = doc.to_dict()
-        d["id"] = doc.id
-        searchable = f"{d.get('location_code','')} {d.get('batch_number','')} {d.get('item_number','')} {d.get('description','')}".lower()
-        if q_lower in searchable:
-            for k, v in d.items():
-                if hasattr(v, "isoformat"):
-                    d[k] = v.isoformat()
-            results.append(d)
-    return sorted(results, key=lambda x: x.get("booked_at", ""), reverse=True)
+    pattern = f"%{query}%"
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT * FROM rohteillager
+               WHERE CAST(RTRIM(Menge) AS INT) > 0
+                 AND (RTRIM(Artikelnummer) LIKE ?
+                   OR RTRIM(Bezeichnung) LIKE ?
+                   OR RTRIM(Lagerort) LIKE ?
+                   OR RTRIM(Lieferschein) LIKE ?
+                   OR RTRIM(Chargennummer) LIKE ?)
+               ORDER BY Datum DESC""",
+            pattern, pattern, pattern, pattern, pattern,
+        )
+        cols = _columns(cur)
+        return [_row_to_booking(r, cols) for r in cur.fetchall()]

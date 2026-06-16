@@ -10,12 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import com.wms.gridlocator.data.Booking
+import com.wms.gridlocator.i18n.LocalAppStrings
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.WmsViewModel
 
@@ -24,8 +25,11 @@ fun CellDetailsDialog(
     locationCode: String,
     bookings: List<Booking>,
     viewModel: WmsViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    readOnly: Boolean = false
 ) {
+    val s = LocalAppStrings.current
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.width(600.dp).heightIn(max = 700.dp),
@@ -35,7 +39,6 @@ fun CellDetailsDialog(
             Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Header))
 
             Column {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth().background(SurfaceContainer).padding(20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -43,24 +46,23 @@ fun CellDetailsDialog(
                 ) {
                     Column {
                         Text(
-                            "$locationCode — Occupied",
+                            "$locationCode — ${s.occupied}",
                             fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimary
                         )
                         Text(
-                            "${bookings.size} active slot(s)",
+                            "${bookings.size} ${s.activeSlotsFormat}",
                             fontSize = 14.sp, color = TextSecondary
                         )
                     }
                     Surface(shape = RoundedCornerShape(999.dp), color = CellRed.copy(alpha = 0.15f)) {
                         Text(
-                            "OCCUPIED",
+                            s.occupiedStatus,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                             fontSize = 12.sp, fontWeight = FontWeight.Bold, color = CellRed
                         )
                     }
                 }
 
-                // Batch cards
                 Column(
                     modifier = Modifier
                         .weight(1f, fill = false)
@@ -69,7 +71,7 @@ fun CellDetailsDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     bookings.forEach { booking ->
-                        BatchCard(booking, viewModel)
+                        BatchCard(booking, viewModel, readOnly)
                     }
 
                     if (bookings.isEmpty()) {
@@ -77,12 +79,11 @@ fun CellDetailsDialog(
                             modifier = Modifier.fillMaxWidth().padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Cell is now empty", fontSize = 18.sp, color = TextSecondary)
+                            Text(s.cellNowEmpty, fontSize = 18.sp, color = TextSecondary)
                         }
                     }
                 }
 
-                // Footer: Add batch + close
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -93,17 +94,16 @@ fun CellDetailsDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f).height(48.dp)
-                    ) { Text("Close") }
+                    ) { Text(s.close) }
 
-                    if (bookings.size < viewModel.config.maxSlotsPerCell) {
+                    if (!readOnly && bookings.size < viewModel.config.maxSlotsPerCell) {
                         Button(
                             onClick = {
                                 viewModel.dismissCellDetails()
-                                // This will show as empty cell -> book in form next tap
                             },
                             modifier = Modifier.weight(2f).height(48.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Accent)
-                        ) { Text("+ ADD BATCH", fontWeight = FontWeight.Bold) }
+                        ) { Text(s.addBatch, fontWeight = FontWeight.Bold) }
                     }
                 }
             }
@@ -112,7 +112,8 @@ fun CellDetailsDialog(
 }
 
 @Composable
-private fun BatchCard(booking: Booking, viewModel: WmsViewModel) {
+private fun BatchCard(booking: Booking, viewModel: WmsViewModel, readOnly: Boolean = false) {
+    val s = LocalAppStrings.current
     var showConsume by remember { mutableStateOf(false) }
     var consumeQty by remember { mutableStateOf("") }
     Card(
@@ -127,11 +128,11 @@ private fun BatchCard(booking: Booking, viewModel: WmsViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Item No.", fontSize = 11.sp, color = TextSecondary)
+                    Text(s.itemNo, fontSize = 11.sp, color = TextSecondary)
                     Text(booking.itemNumber, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Batch", fontSize = 11.sp, color = TextSecondary)
+                    Text(s.batch, fontSize = 11.sp, color = TextSecondary)
                     Text(booking.batchNumber, fontSize = 13.sp, color = TextPrimary)
                 }
             }
@@ -145,55 +146,57 @@ private fun BatchCard(booking: Booking, viewModel: WmsViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Quantity", fontSize = 11.sp, color = TextSecondary)
+                    Text(s.quantity, fontSize = 11.sp, color = TextSecondary)
                     Text("${booking.qty}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                 }
                 Column {
-                    Text("Type", fontSize = 11.sp, color = TextSecondary)
+                    Text(s.type, fontSize = 11.sp, color = TextSecondary)
                     Text(booking.itemType, fontSize = 14.sp, color = TextPrimary)
                 }
                 Column {
-                    Text("Booked By", fontSize = 11.sp, color = TextSecondary)
+                    Text(s.bookedBy, fontSize = 11.sp, color = TextSecondary)
                     Text(booking.bookedBy, fontSize = 14.sp, color = TextPrimary)
                 }
             }
             Spacer(Modifier.height(12.dp))
 
-            if (showConsume) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = consumeQty,
-                        onValueChange = { consumeQty = it.filter { c -> c.isDigit() } },
-                        label = { Text("Qty") },
-                        modifier = Modifier.weight(1f).height(56.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
+            if (!readOnly) {
+                if (showConsume) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = consumeQty,
+                            onValueChange = { consumeQty = it.filter { c -> c.isDigit() } },
+                            label = { Text(s.qty) },
+                            modifier = Modifier.weight(1f).height(56.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        Button(
+                            onClick = {
+                                val q = consumeQty.toIntOrNull() ?: 0
+                                if (q in 1..booking.qty) {
+                                    viewModel.consume(booking.id, q)
+                                    showConsume = false
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Header),
+                            modifier = Modifier.height(48.dp)
+                        ) { Text(s.confirm) }
+                        OutlinedButton(
+                            onClick = { showConsume = false },
+                            modifier = Modifier.height(48.dp)
+                        ) { Text(s.cancel) }
+                    }
+                } else {
                     Button(
-                        onClick = {
-                            val q = consumeQty.toIntOrNull() ?: 0
-                            if (q in 1..booking.qty) {
-                                viewModel.consume(booking.id, q)
-                                showConsume = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Header),
-                        modifier = Modifier.height(48.dp)
-                    ) { Text("Confirm") }
-                    OutlinedButton(
-                        onClick = { showConsume = false },
-                        modifier = Modifier.height(48.dp)
-                    ) { Text("Cancel") }
+                        onClick = { showConsume = true },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Header)
+                    ) { Text(s.consume) }
                 }
-            } else {
-                Button(
-                    onClick = { showConsume = true },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Header)
-                ) { Text("Consume") }
             }
         }
     }

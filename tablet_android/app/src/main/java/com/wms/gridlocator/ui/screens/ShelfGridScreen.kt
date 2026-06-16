@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wms.gridlocator.i18n.LocalAppStrings
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.WmsViewModel
 
@@ -62,13 +63,14 @@ fun ShelfGridScreen(viewModel: WmsViewModel) {
         }
 
         // Legend
+        val s = LocalAppStrings.current
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            LegendItem(CellGreen, "EMPTY")
-            LegendItem(CellRed, "OCCUPIED")
+            LegendItem(CellGreen, s.empty)
+            LegendItem(CellRed, s.occupied)
         }
 
         // Scrollable grid

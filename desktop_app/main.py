@@ -5,7 +5,10 @@ import webview
 from api import WmsApi
 from seed_db import seed
 
-TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
+if getattr(sys, 'frozen', False):
+    TEMPLATES_DIR = os.path.join(sys._MEIPASS, "templates")
+else:
+    TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
 
 
 def main():

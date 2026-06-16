@@ -29,6 +29,16 @@ data class Movement(
     val timestamp: String = ""
 )
 
+data class FifoPlanItem(
+    val bookingId: String,
+    val locationCode: String,
+    val itemNumber: String,
+    val batchNumber: String,
+    val available: Int,
+    val take: Int,
+    val bookedAt: String
+)
+
 data class ErpDelivery(
     val itemNumber: String = "",
     val purchaseNumber: String = "",

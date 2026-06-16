@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wms.gridlocator.data.ConfigLoader
+import com.wms.gridlocator.i18n.LocalAppStrings
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.WmsViewModel
 
@@ -19,10 +20,11 @@ import com.wms.gridlocator.viewmodel.WmsViewModel
 fun ZoneSelectorScreen(viewModel: WmsViewModel) {
     val state by viewModel.state.collectAsState()
     val config = viewModel.config
+    val s = LocalAppStrings.current
 
     Column(modifier = Modifier.fillMaxSize().background(Surface).padding(24.dp)) {
-        Text("Select Zone", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-        Text("Tap a zone to view shelf grid", fontSize = 14.sp, color = TextSecondary)
+        Text(s.selectZone, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Text(s.tapZoneToView, fontSize = 14.sp, color = TextSecondary)
         Spacer(Modifier.height(24.dp))
 
         Row(
@@ -66,7 +68,7 @@ fun ZoneSelectorScreen(viewModel: WmsViewModel) {
                                 color = SurfaceContainer
                             ) {
                                 Text(
-                                    "Zone $code",
+                                    "${s.zone} $code",
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                                 )
@@ -77,7 +79,7 @@ fun ZoneSelectorScreen(viewModel: WmsViewModel) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("$occupied / $total locations", fontSize = 14.sp, color = TextSecondary)
+                                Text("$occupied / $total ${s.locations}", fontSize = 14.sp, color = TextSecondary)
                                 Text("$pct%", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                             }
                             Spacer(Modifier.height(8.dp))

@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -44,15 +43,14 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:32.7.1"))
-    implementation("com.google.firebase:firebase-firestore-ktx")
-
-    // Security (password hashing)
-    implementation("at.favre.lib:bcrypt:0.10.2")
+    // SQL Server JDBC (jTDS works on Android)
+    implementation("net.sourceforge.jtds:jtds:1.3.1")
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // bcrypt
+    implementation("org.mindrot:jbcrypt:0.4")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

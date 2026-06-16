@@ -1,15 +1,18 @@
 package com.wms.gridlocator.data
 
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
+import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class GridConfig(
-    val maxSlotsPerCell: Int = 2,
+    @SerializedName("max_slots_per_cell") val maxSlotsPerCell: Int = 2,
     val zones: Map<String, ZoneConfig> = emptyMap()
 )
 
 data class ZoneConfig(
-    val displayName: String = "",
+    @SerializedName("display_name") val displayName: String = "",
     val shelves: Map<String, ShelfConfig> = emptyMap()
 )
 
@@ -20,35 +23,13 @@ data class ShelfConfig(
 
 object ConfigLoader {
     private var config: GridConfig? = null
+    private val gson = Gson()
 
-    suspend fun load(): GridConfig {
-        if (config != null) return config!!
-        val doc = FirebaseFirestore.getInstance()
-            .collection("app_config").document("grid_config")
-            .get().await()
-        if (!doc.exists()) {
-            config = GridConfig()
-            return config!!
-        }
-        val data = doc.data ?: run { config = GridConfig(); return config!! }
-        val maxSlots = (data["max_slots_per_cell"] as? Long)?.toInt() ?: 2
-
-        @Suppress("UNCHECKED_CAST")
-        val zonesRaw = data["zones"] as? Map<String, Map<String, Any>> ?: emptyMap()
-        val zones = zonesRaw.mapValues { (_, zoneData) ->
-            val displayName = zoneData["display_name"] as? String ?: ""
-            @Suppress("UNCHECKED_CAST")
-            val shelvesRaw = zoneData["shelves"] as? Map<String, Map<String, Any>> ?: emptyMap()
-            val shelves = shelvesRaw.mapValues { (_, shelfData) ->
-                ShelfConfig(
-                    sections = (shelfData["sections"] as? Long)?.toInt() ?: 4,
-                    rows = (shelfData["rows"] as? Long)?.toInt() ?: 6
-                )
-            }
-            ZoneConfig(displayName = displayName, shelves = shelves)
-        }
-        config = GridConfig(maxSlotsPerCell = maxSlots, zones = zones)
-        return config!!
+    suspend fun load(context: Context): GridConfig = withContext(Dispatchers.IO) {
+        if (config != null) return@withContext config!!
+        val json = context.assets.open("grid_config.json").bufferedReader().readText()
+        config = gson.fromJson(json, GridConfig::class.java)
+        config!!
     }
 
     fun getTotalCells(zoneConfig: ZoneConfig): Int {

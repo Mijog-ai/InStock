@@ -77,19 +77,3 @@ def get_recent_deliveries():
         return []
 
 
-def sync_deliveries_to_firestore():
-    """Fetch ERP deliveries and write them to Firestore for tablet access."""
-    from firestore_client import db
-
-    deliveries = get_recent_deliveries()
-    coll = db.collection("erp_deliveries")
-
-    # Clear old docs
-    for doc in coll.stream():
-        doc.reference.delete()
-
-    for d in deliveries:
-        coll.add(d)
-
-    print(f"[ERP] Synced {len(deliveries)} deliveries to Firestore")
-    return len(deliveries)

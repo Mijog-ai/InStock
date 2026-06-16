@@ -18,12 +18,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.wms.gridlocator.data.ErpDelivery
+import com.wms.gridlocator.i18n.LocalAppStrings
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.WmsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () -> Unit) {
+    val s = LocalAppStrings.current
     var itemNumber by remember { mutableStateOf("") }
     var itemType by remember { mutableStateOf("Raw") }
     var batchNumber by remember { mutableStateOf("") }
@@ -62,7 +64,6 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                 Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Header))
 
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // Title row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -70,7 +71,7 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                     ) {
                         Column {
                             Text(locationCode, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text("Book In — Location Booking", fontSize = 12.sp, color = TextSecondary)
+                            Text(s.bookInTitle, fontSize = 12.sp, color = TextSecondary)
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             validationError?.let {
@@ -80,14 +81,14 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                             OutlinedButton(
                                 onClick = onDismiss,
                                 modifier = Modifier.height(40.dp)
-                            ) { Text("Cancel", fontSize = 13.sp) }
+                            ) { Text(s.cancel, fontSize = 13.sp) }
                             Button(
                                 onClick = {
                                     val q = qty.toIntOrNull() ?: 0
                                     when {
-                                        itemNumber.isBlank() -> validationError = "Item number required"
-                                        batchNumber.isBlank() -> validationError = "PO# required"
-                                        q <= 0 -> validationError = "Quantity must be > 0"
+                                        itemNumber.isBlank() -> validationError = s.itemNumberRequired
+                                        batchNumber.isBlank() -> validationError = s.poRequired
+                                        q <= 0 -> validationError = s.qtyMustBePositive
                                         else -> {
                                             validationError = null
                                             viewModel.bookIn(locationCode, itemNumber, itemType, batchNumber, q, description)
@@ -97,13 +98,12 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                                 },
                                 modifier = Modifier.height(40.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Accent)
-                            ) { Text("BOOK LOCATION", fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                            ) { Text(s.bookLocation, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
                         }
                     }
 
                     Spacer(Modifier.height(12.dp))
 
-                    // Horizontal layout: ERP table left, form fields right
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -115,12 +115,12 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Select ERP Delivery", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                                Text(s.selectErpDelivery, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
                                 Spacer(Modifier.weight(1f))
                                 OutlinedTextField(
                                     value = erpSearch,
                                     onValueChange = { erpSearch = it },
-                                    placeholder = { Text("Search item / PO#...", fontSize = 12.sp) },
+                                    placeholder = { Text(s.searchPlaceholder, fontSize = 12.sp) },
                                     modifier = Modifier.width(220.dp),
                                     singleLine = true,
                                     textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
@@ -151,7 +151,7 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                                 } else if (filteredDeliveries.isEmpty()) {
                                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                         Text(
-                                            if (query.isNotEmpty()) "No matches for \"$erpSearch\"" else "No recent deliveries",
+                                            if (query.isNotEmpty()) "${s.noMatches} \"$erpSearch\"" else s.noRecentDeliveries,
                                             color = TextSecondary, fontSize = 13.sp
                                         )
                                     }
@@ -164,11 +164,11 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                                                     .background(SurfaceContainer)
                                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                                             ) {
-                                                Text("Item", Modifier.weight(2f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
-                                                Text("PO#", Modifier.weight(1.5f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
-                                                Text("Qty", Modifier.weight(0.8f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
-                                                Text("Supplier", Modifier.weight(2f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
-                                                Text("Date", Modifier.weight(1.2f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                                Text(s.item, Modifier.weight(2f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                                Text(s.poNumber, Modifier.weight(1.5f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                                Text(s.qty, Modifier.weight(0.8f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                                Text(s.supplier, Modifier.weight(2f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                                Text(s.date, Modifier.weight(1.2f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
                                             }
                                         }
                                         itemsIndexed(filteredDeliveries) { idx, d ->
@@ -207,18 +207,18 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                             }
                         }
 
-                        // Right: Form fields — compact 2-column grid
+                        // Right: Form fields
                         Column(
                             modifier = Modifier.weight(0.8f),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Form Details", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                            Text(s.formDetails, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
 
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 OutlinedTextField(
                                     value = itemNumber,
                                     onValueChange = { itemNumber = it },
-                                    label = { Text("Item Number") },
+                                    label = { Text(s.itemNumber) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true
                                 )
@@ -231,7 +231,7 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                                         value = itemType,
                                         onValueChange = {},
                                         readOnly = true,
-                                        label = { Text("Type") },
+                                        label = { Text(s.type) },
                                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                                         modifier = Modifier.menuAnchor()
                                     )
@@ -247,14 +247,14 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                                 OutlinedTextField(
                                     value = batchNumber,
                                     onValueChange = { batchNumber = it },
-                                    label = { Text("PO#") },
+                                    label = { Text(s.poNumber) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true
                                 )
                                 OutlinedTextField(
                                     value = qty,
                                     onValueChange = { qty = it.filter { c -> c.isDigit() } },
-                                    label = { Text("Qty") },
+                                    label = { Text(s.qty) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -264,7 +264,7 @@ fun BookInDialog(locationCode: String, viewModel: WmsViewModel, onDismiss: () ->
                             OutlinedTextField(
                                 value = description,
                                 onValueChange = { description = it },
-                                label = { Text("Description") },
+                                label = { Text(s.description) },
                                 modifier = Modifier.fillMaxWidth(),
                                 maxLines = 2
                             )

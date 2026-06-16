@@ -1,475 +1,979 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>WMS Grid Locator</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        "error": "#ba1a1a",
-        "surface-bright": "#f8f9ff",
-        "primary-container": "#1e293b",
-        "surface-container": "#e5eeff",
-        "on-secondary": "#ffffff",
-        "on-error": "#ffffff",
-        "on-primary": "#ffffff",
-        "primary-fixed-dim": "#bcc7de",
-        "secondary-fixed": "#ffdbca",
-        "on-tertiary": "#ffffff",
-        "on-error-container": "#93000a",
-        "on-tertiary-fixed": "#002109",
-        "primary": "#091426",
-        "tertiary-fixed-dim": "#4ae176",
-        "on-primary-fixed-variant": "#3c475a",
-        "tertiary-fixed": "#6bff8f",
-        "on-secondary-fixed": "#341100",
-        "surface-container-lowest": "#ffffff",
-        "surface-container-low": "#eff4ff",
-        "surface-container-high": "#dce9ff",
-        "inverse-surface": "#213145",
-        "on-primary-fixed": "#111c2d",
-        "inverse-on-surface": "#eaf1ff",
-        "inverse-primary": "#bcc7de",
-        "surface-container-highest": "#d3e4fe",
-        "tertiary-container": "#003010",
-        "primary-fixed": "#d8e3fb",
-        "on-tertiary-fixed-variant": "#005321",
-        "background": "#f8f9ff",
-        "surface-dim": "#cbdbf5",
-        "on-secondary-container": "#5c2400",
-        "on-surface": "#0b1c30",
-        "secondary-fixed-dim": "#ffb690",
-        "tertiary": "#001906",
-        "on-tertiary-container": "#00a64a",
-        "outline-variant": "#c5c6cd",
-        "surface-variant": "#d3e4fe",
-        "secondary": "#9d4300",
-        "surface": "#f8f9ff",
-        "on-surface-variant": "#45474c",
-        "error-container": "#ffdad6",
-        "surface-tint": "#545f73",
-        "outline": "#75777d",
-        "on-secondary-fixed-variant": "#783200",
-        "secondary-container": "#fd761a",
-        "on-primary-container": "#8590a6",
-        "on-background": "#0b1c30"
-      },
-      borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
-      spacing: { xs: "8px", sm: "12px", md: "16px", xl: "32px", base: "4px", "touch-target": "48px", gutter: "16px", "container-margin": "24px", lg: "24px" },
-      fontFamily: { "body-lg": ["Inter"], "label-md": ["Inter"], "display-lg": ["Inter"], "code-md": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-md": ["Inter"], "headline-lg": ["Inter"], "title-lg": ["Inter"], "body-md": ["Inter"] },
-      fontSize: {
-        "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}],
-        "label-md": ["14px", {lineHeight: "20px", fontWeight: "600"}],
-        "display-lg": ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}],
-        "code-md": ["14px", {lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "500"}],
-        "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}],
-        "headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}],
-        "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700"}],
-        "title-lg": ["20px", {lineHeight: "28px", fontWeight: "600"}],
-        "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}]
-      }
-    }
-  }
-}
-</script>
+<title id="page-title">WMS Grid Locator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
-body { font-family: 'Inter', sans-serif; margin: 0; }
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  user-select: none; display: inline-block; line-height: 1;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #F5F6F7;
+  --surface:   #FFFFFF;
+  --surface-2: #F0F2F5;
+  --border:    #E2E5EA;
+  --border-2:  #CDD1D8;
+  --text-1:    #111318;
+  --text-2:    #5A6070;
+  --text-3:    #8A92A0;
+  --accent:    #1A56DB;
+  --accent-bg: #EBF0FD;
+  --accent-dk: #1240A8;
+  --success:   #0E7A4E;
+  --success-bg:#E5F5EE;
+  --danger:    #C0392B;
+  --danger-bg: #FDECEB;
+  --warn:      #B45309;
+  --warn-bg:   #FEF3C7;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Inter', system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --sidebar-w: 220px;
+  --topbar-h:  52px;
+  --transition: 0.12s ease;
 }
-.industrial-pattern { background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px); background-size: 24px 24px; }
-.inner-press:active { box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.15); transform: scale(0.98); }
-.tactile-card { transition: all 0.15s cubic-bezier(0.4,0,0.2,1); border-bottom-width: 4px; border-color: rgba(0,0,0,0.1); }
-.tactile-card:active { transform: translateY(2px); border-bottom-width: 0; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); }
-.shelf-cell { box-shadow: inset 0 -2px 0 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.05); transition: all 0.1s cubic-bezier(0.4,0,0.2,1); }
-.shelf-cell:active { box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.2); transform: scale(0.96); }
+
+body {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text-1);
+  background: var(--bg);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Typography ── */
+h1 { font-size: 20px; font-weight: 600; }
+h2 { font-size: 16px; font-weight: 600; }
+h3 { font-size: 14px; font-weight: 600; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
+
+/* ── Utils ── */
+.hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0 14px; height: 34px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; font-family: var(--sans);
+  border: 1px solid transparent; cursor: pointer;
+  transition: all var(--transition); white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-dk); border-color: var(--accent-dk); }
+.btn-ghost { background: transparent; color: var(--text-2); border-color: var(--border); }
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--text-1); }
+.btn-danger { background: var(--danger-bg); color: var(--danger); border-color: transparent; }
+.btn-danger:hover { background: #fad7d5; }
+.btn-sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: var(--radius-sm); }
+.btn-icon { width: 34px; height: 34px; padding: 0; border-radius: var(--radius); display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; transition: all var(--transition); }
+.btn-icon:hover { background: var(--surface-2); color: var(--text-1); }
+
+/* ── Form Elements ── */
+input, select, textarea {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  height: 36px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(26,86,219,0.12);
+}
+textarea { height: auto; padding: 8px 12px; resize: vertical; }
+select { cursor: pointer; }
+label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 4px; }
+
+/* ── Badge / Pill ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+}
+.badge-blue  { background: var(--accent-bg); color: var(--accent-dk); }
+.badge-green { background: var(--success-bg); color: var(--success); }
+.badge-red   { background: var(--danger-bg); color: var(--danger); }
+.badge-amber { background: var(--warn-bg); color: var(--warn); }
+.badge-gray  { background: var(--surface-2); color: var(--text-2); }
+
+/* ── Card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface);
+}
+.card-body { padding: 16px; }
+
+/* ── Table ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3);
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  white-space: nowrap; background: var(--surface);
+  position: sticky; top: 0; z-index: 2;
+}
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr { transition: background var(--transition); cursor: pointer; }
+.data-table tbody tr:hover { background: var(--surface-2); }
+
+/* ── Progress Bar ── */
+.progress { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+/* ── Page ── */
 .page { display: none; }
-.page.active { display: flex; flex-direction: column; flex: 1; }
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-.nav-link { transition: all 0.15s ease; }
-.nav-link.active-nav { background: #fd761a; color: #5c2400; border-radius: 0.5rem; }
-.fade-in { animation: fadeIn 0.2s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.page.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* ── Fade In ── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.page.active { animation: fadeUp 0.18s ease-out; }
+
+/* ─────────────────────────────
+   LOGIN
+───────────────────────────── */
+#page-login {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 400px;
+  overflow: hidden;
+}
+.login-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.login-logo {
+  width: 44px; height: 44px;
+  background: var(--accent); color: #fff;
+  border-radius: var(--radius);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 12px;
+}
+.login-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+.login-footer {
+  padding: 12px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 11px; color: var(--text-3);
+  font-family: var(--mono);
+}
+.login-error {
+  background: var(--danger-bg); color: var(--danger);
+  border: 1px solid #f5c6c2;
+  border-radius: var(--radius); padding: 8px 12px;
+  font-size: 13px; display: none;
+}
+
+/* ─────────────────────────────
+   APP SHELL
+───────────────────────────── */
+#app-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Topbar */
+#topbar {
+  height: var(--topbar-h); flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 16px;
+  z-index: 50;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 14px; color: var(--text-1);
+  text-decoration: none; flex-shrink: 0;
+  margin-right: 8px;
+}
+.topbar-logo-icon {
+  width: 28px; height: 28px; background: var(--accent); color: #fff;
+  border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.topbar-search {
+  flex: 1; max-width: 320px;
+  position: relative;
+}
+.topbar-search i {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text-3); font-size: 16px; pointer-events: none;
+}
+.topbar-search input {
+  padding-left: 34px; font-size: 13px; height: 34px;
+}
+.topbar-spacer { flex: 1; }
+.topbar-user {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 10px; border-radius: var(--radius);
+  cursor: pointer; border: 1px solid transparent;
+  transition: all var(--transition);
+}
+.topbar-user:hover { background: var(--surface-2); border-color: var(--border); }
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.topbar-user-info { display: flex; flex-direction: column; }
+.topbar-user-name { font-size: 13px; font-weight: 500; line-height: 1.3; }
+.topbar-user-role { font-size: 11px; color: var(--text-3); line-height: 1.3; }
+
+/* Body layout (sidebar + content) */
+#body-wrap { display: flex; flex: 1; min-height: 0; }
+
+/* Sidebar */
+#sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.nav-section { padding: 8px; flex: 1; }
+.nav-label {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-3);
+  padding: 8px 8px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; color: var(--text-2);
+  cursor: pointer; transition: all var(--transition);
+  text-decoration: none; border: 1px solid transparent;
+}
+.nav-item i { font-size: 16px; }
+.nav-item:hover { background: var(--surface-2); color: var(--text-1); }
+.nav-item.active { background: var(--accent-bg); color: var(--accent); border-color: rgba(26,86,219,0.15); }
+.nav-item.active i { color: var(--accent); }
+.sidebar-footer {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Main content */
+#main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ─────────────────────────────
+   DASHBOARD
+───────────────────────────── */
+#page-dashboard { overflow-y: auto; }
+.dash-wrap { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+.page-title { margin-bottom: 4px; }
+.page-subtitle { color: var(--text-2); font-size: 13px; }
+
+.zone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.zone-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.zone-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,219,0.08); }
+.zone-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.zone-icon {
+  width: 36px; height: 36px; border-radius: var(--radius);
+  background: var(--accent-bg); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.zone-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+.zone-stats { font-size: 12px; color: var(--text-3); margin-bottom: 8px; }
+.zone-pct { font-size: 13px; font-weight: 600; color: var(--accent); text-align: right; margin-bottom: 4px; }
+
+/* ─────────────────────────────
+   ZONES / GRID
+───────────────────────────── */
+#page-zones { overflow: hidden; }
+.zones-inner { display: flex; flex-direction: column; height: 100%; padding: 16px; gap: 12px; }
+.zones-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.zone-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill {
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-2);
+  cursor: pointer; transition: all var(--transition);
+}
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.shelf-tabs { display: flex; gap: 6px; overflow-x: auto; flex-shrink: 0; }
+.shelf-tab {
+  padding: 5px 14px; border-radius: var(--radius);
+  font-size: 12px; font-weight: 600;
+  font-family: var(--mono);
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-2);
+  cursor: pointer; transition: all var(--transition); white-space: nowrap; flex-shrink: 0;
+}
+.shelf-tab:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.shelf-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.grid-legend { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
+.legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+.grid-wrap {
+  flex: 1; min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: auto;
+}
+#grid-container { padding: 12px; height: 100%; }
+
+/* Grid cells */
+.grid-cell {
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+.grid-cell.empty {
+  background: var(--success-bg); border-color: #a7d9bc; color: var(--success);
+}
+.grid-cell.empty:hover { background: #c8ecd8; border-color: var(--success); }
+.grid-cell.occupied {
+  background: var(--danger-bg); border-color: #f5b7b1; color: var(--danger);
+}
+.grid-cell.occupied:hover { background: #fad5d2; border-color: var(--danger); }
+.grid-cell:active { transform: scale(0.94); }
+.grid-row-label {
+  font-size: 10px; font-weight: 600; font-family: var(--mono);
+  color: var(--text-3); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;
+}
+.grid-col-header {
+  font-size: 10px; font-weight: 600; font-family: var(--mono);
+  color: var(--text-3); display: flex; align-items: center; justify-content: center;
+}
+
+/* Breadcrumb */
+.breadcrumb { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-3); }
+.breadcrumb a { color: var(--text-3); text-decoration: none; cursor: pointer; transition: color var(--transition); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb .current { color: var(--text-1); font-weight: 500; }
+.breadcrumb i { font-size: 14px; }
+
+/* ─────────────────────────────
+   MODALS
+───────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(17,19,24,0.4);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-backdrop.hidden { display: none; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 540px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  max-height: 92vh; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.modal.sm { max-width: 360px; }
+.modal-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-shrink: 0;
+}
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-subtitle { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.modal-body { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0;
+}
+
+/* Form groups */
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-sep { border: none; border-top: 1px solid var(--border); margin: 2px 0; }
+
+/* ERP list */
+.erp-list-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.erp-row { cursor: pointer; transition: background var(--transition); }
+.erp-row:hover { background: var(--surface-2); }
+.erp-row.selected { background: var(--accent-bg); }
+.erp-row td { padding: 7px 10px; font-size: 12px; border-bottom: 1px solid var(--border); }
+.erp-row:last-child td { border-bottom: none; }
+.erp-header th {
+  padding: 6px 10px; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-3);
+  background: var(--surface-2); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 1;
+}
+
+/* Booking cards in modal */
+.booking-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.booking-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.booking-card-item { font-size: 15px; font-weight: 600; }
+.booking-card-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.booking-meta-field .meta-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.booking-meta-field .meta-val { font-size: 14px; font-weight: 600; margin-top: 1px; }
+
+/* Users page */
+#page-users { overflow-y: auto; }
+.users-wrap { max-width: 760px; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Search results */
+#page-search { overflow: hidden; }
+.search-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; padding: 16px; gap: 12px; }
+.search-table-wrap { flex: 1; min-height: 0; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 200;
+  background: var(--text-1); color: #fff;
+  padding: 9px 16px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+#toast.hidden { display: none; }
+#toast.error { background: var(--danger); }
+#toast.info  { background: var(--accent-dk); }
+
+/* ── FIFO table ── */
+.fifo-row { transition: background var(--transition); }
+.fifo-row.take { background: var(--success-bg); }
+.fifo-row.skip { opacity: 0.45; }
+.fifo-take-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  background: var(--success-bg); color: var(--success);
+  border: 1px solid #a7d9bc;
+}
+
+/* ── Input / Consume page overflow ── */
+#page-input { overflow: hidden; }
+#page-consume { overflow: hidden; }
 </style>
 </head>
-<body class="bg-background text-on-background font-body-md min-h-screen">
+<body>
 
-<!-- ==================== LOGIN PAGE ==================== -->
-<div id="page-login" class="page active">
-<div class="min-h-screen flex items-center justify-center p-md industrial-pattern relative overflow-hidden">
-  <main class="relative z-10 w-full max-w-[480px]">
-    <div class="bg-surface-container-lowest border border-outline-variant shadow-lg rounded-xl overflow-hidden">
-      <div class="h-1.5 bg-secondary w-full"></div>
-      <div class="p-xl md:p-lg space-y-xl">
-        <header class="flex flex-col items-center text-center space-y-md">
-          <div class="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center shadow-md">
-            <span class="material-symbols-outlined text-on-primary text-[40px]">grid_view</span>
-          </div>
-          <div class="space-y-base">
-            <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">WMS Grid Locator</h1>
-            <p class="font-body-md text-on-surface-variant">Warehouse Zone Alpha-9 Security Portal</p>
-          </div>
-        </header>
-        <form class="space-y-lg" onsubmit="return handleLogin(event)">
-          <div class="space-y-md">
-            <div class="relative group">
-              <label class="absolute -top-2.5 left-3 px-1 bg-surface-container-lowest text-[12px] font-semibold text-outline group-focus-within:text-secondary transition-colors" for="login-username">Username</label>
-              <div class="flex items-center border-2 border-outline-variant rounded-lg focus-within:border-secondary transition-all">
-                <div class="px-md text-outline"><span class="material-symbols-outlined">account_circle</span></div>
-                <input class="w-full h-[56px] bg-transparent border-none focus:ring-0 font-body-md text-on-surface" id="login-username" placeholder="Enter employee ID" type="text" required/>
-              </div>
-            </div>
-            <div class="relative group">
-              <label class="absolute -top-2.5 left-3 px-1 bg-surface-container-lowest text-[12px] font-semibold text-outline group-focus-within:text-secondary transition-colors" for="login-password">Password</label>
-              <div class="flex items-center border-2 border-outline-variant rounded-lg focus-within:border-secondary transition-all">
-                <div class="px-md text-outline"><span class="material-symbols-outlined">lock</span></div>
-                <input class="w-full h-[56px] bg-transparent border-none focus:ring-0 font-body-md text-on-surface" id="login-password" placeholder="••••••••" type="password" required/>
-              </div>
-            </div>
-          </div>
-          <div id="login-error" class="hidden text-error font-label-md text-center bg-error-container/30 p-sm rounded-lg"></div>
-          <div class="pt-sm">
-            <button class="inner-press w-full h-[56px] bg-secondary text-on-secondary rounded-lg font-title-lg text-title-lg flex items-center justify-center gap-sm shadow-md" type="submit">
-              <span>Authenticate Access</span>
-              <span class="material-symbols-outlined">login</span>
-            </button>
-          </div>
-        </form>
-        <footer class="flex items-center justify-center pt-md border-t border-outline-variant">
-          <div class="flex items-center gap-xs text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]">help_outline</span>
-            <span class="font-label-md text-label-md">admin / admin123 | logistics1 / log123 | consumer1 / con123</span>
-          </div>
-        </footer>
-      </div>
+<!-- ══════════════════════════════
+     LOGIN
+══════════════════════════════ -->
+<div id="page-login">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo"><i class="ti ti-grid-dots"></i></div>
+      <h1 style="font-size:18px; margin-bottom:4px;" id="login-app-name">WMS Grid Locator</h1>
+      <p style="font-size:13px; color:var(--text-3);" id="login-subtitle"></p>
     </div>
-    <div class="mt-md flex justify-center">
-      <div class="px-md py-xs bg-surface-container-high rounded-full flex items-center gap-sm border border-outline-variant">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary-container opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-on-tertiary-container"></span>
-        </span>
-        <span class="font-code-md text-code-md text-on-surface-variant uppercase">Grid Status: Online</span>
+    <form class="login-body" onsubmit="return handleLogin(event)">
+      <div class="form-group">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="Employee ID" required autofocus/>
       </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••" required/>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="btn btn-primary" type="submit" style="width:100%; height:38px; font-size:14px;">
+        <i class="ti ti-login"></i> Sign in
+      </button>
+    </form>
+    <div class="login-footer">
+      admin / admin123 &nbsp;·&nbsp; logistics1 / log123 &nbsp;·&nbsp; consumer1 / con123
     </div>
-  </main>
-</div>
+  </div>
 </div>
 
-<!-- ==================== APP SHELL (after login) ==================== -->
+<!-- ══════════════════════════════
+     APP SHELL
+══════════════════════════════ -->
 <div id="app-shell" class="hidden">
 
-<!-- Top Nav -->
-<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target bg-primary text-on-primary shadow-sm border-b border-outline-variant">
-  <div class="flex items-center gap-md">
-    <span class="text-title-lg font-title-lg font-bold text-on-primary">WMS Grid Locator</span>
-  </div>
-  <div class="flex items-center gap-xl">
-    <div class="relative">
-      <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-primary-container">search</span>
-      <input class="bg-primary-container text-on-primary border-none rounded-lg pl-xl pr-md py-xs w-64 focus:ring-2 focus:ring-secondary text-label-md font-label-md placeholder-on-primary-container" placeholder="Find location or PO#..." type="text" id="global-search" onkeydown="if(event.key==='Enter')doSearch()"/>
-    </div>
-    <div class="flex flex-col items-end">
-      <span class="font-label-md text-label-md" id="header-username"></span>
-      <span class="text-[10px] uppercase opacity-70" id="header-role"></span>
-    </div>
-    <button class="material-symbols-outlined hover:bg-primary-container p-2 rounded-full transition-colors" onclick="doLogout()">logout</button>
-  </div>
-</header>
-
-<!-- Sidebar -->
-<aside class="flex flex-col h-screen fixed left-0 top-0 pt-touch-target w-64 bg-surface-container-low border-r border-outline-variant z-40">
-  <div class="p-md flex items-center gap-md border-b border-outline-variant/30">
-    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-sm" id="sidebar-avatar"></div>
-    <div>
-      <p class="font-headline-md text-headline-md text-primary leading-tight" id="sidebar-name" style="font-size:16px;"></p>
-      <p class="font-label-md text-label-md text-on-surface-variant">Zone Alpha-9</p>
-    </div>
-  </div>
-  <nav class="mt-md flex-1" id="sidebar-nav">
-    <a class="nav-link active-nav flex items-center gap-sm px-md py-sm mx-2 my-1 rounded-lg cursor-pointer" onclick="showPage('dashboard')">
-      <span class="material-symbols-outlined">dashboard</span>
-      <span class="font-label-md text-label-md">Dashboard</span>
+  <!-- Topbar -->
+  <header id="topbar">
+    <a class="topbar-logo" href="#" onclick="showPage('dashboard');return false;">
+      <div class="topbar-logo-icon"><i class="ti ti-grid-dots"></i></div>
+      <span id="topbar-app-name">WMS Grid Locator</span>
     </a>
-    <a class="nav-link text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg cursor-pointer" onclick="showPage('zones')">
-      <span class="material-symbols-outlined">grid_view</span>
-      <span class="font-label-md text-label-md">Zones</span>
-    </a>
-    <a class="nav-link text-on-surface-variant flex items-center gap-sm px-md py-sm mx-2 my-1 hover:bg-surface-container-high rounded-lg cursor-pointer" id="nav-users" style="display:none" onclick="showPage('users')">
-      <span class="material-symbols-outlined">group</span>
-      <span class="font-label-md text-label-md">Users</span>
-    </a>
-  </nav>
-  <div class="border-t border-outline-variant/30 p-sm">
-    <a class="text-on-surface-variant flex items-center gap-sm px-md py-sm hover:bg-surface-container-high rounded-lg cursor-pointer" onclick="doLogout()">
-      <span class="material-symbols-outlined">logout</span>
-      <span class="font-label-md text-label-md">Sign Out</span>
-    </a>
+    <div class="topbar-spacer"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="user-avatar" id="header-avatar"></div>
+      <span class="topbar-user-name" id="header-username"></span>
+    </div>
+    <button class="btn-icon" onclick="doLogout()" title="Sign out"><i class="ti ti-logout"></i></button>
+  </header>
+
+  <div id="body-wrap">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <nav class="nav-section">
+        <div class="nav-label">Navigation</div>
+        <a class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+          <i class="ti ti-layout-dashboard"></i> Dashboard
+        </a>
+        <a class="nav-item" id="nav-zones" onclick="showPage('zones')">
+          <i class="ti ti-grid-dots"></i> Grid Zones
+        </a>
+        <a class="nav-item" id="nav-input" onclick="showPage('input')">
+          <i class="ti ti-package-import"></i> Input Stock
+        </a>
+        <a class="nav-item" id="nav-consume" onclick="showPage('consume')">
+          <i class="ti ti-package-export"></i> Consume Stock
+        </a>
+        <a class="nav-item hidden" id="nav-users" onclick="showPage('users')">
+          <i class="ti ti-users"></i> Users
+        </a>
+        <a class="nav-item" id="nav-search" onclick="showPage('search')">
+          <i class="ti ti-search"></i> Search
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="nav-item" onclick="doLogout()">
+          <i class="ti ti-logout"></i> Sign out
+        </div>
+        <div style="padding: 6px 10px; font-size:10px; color:var(--text-3); display:flex;align-items:center;gap:5px;">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);"></span>
+          Grid online · <span id="sidebar-warehouse-label"></span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Pages -->
+    <main id="main-content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="page-dashboard" class="page active fade-in">
+        <div class="dash-wrap">
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle" id="dash-subtitle"></p>
+          </div>
+          <div>
+            <h2 style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Storage zones</h2>
+            <div class="zone-grid" id="zone-cards"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <!-- Recent Inputs -->
+            <div class="card">
+              <div class="card-header">
+                <h2><i class="ti ti-package-import" style="font-size:16px;color:var(--success);vertical-align:-2px;"></i> Recent bookings</h2>
+                <span class="badge badge-green" id="input-count"></span>
+              </div>
+              <div style="overflow-y:auto;max-height:420px;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Location</th>
+                      <th>Item</th>
+                      <th>PO#</th>
+                      <th>Qty</th>
+                      <th>User</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inputs-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Recent Consumes -->
+            <div class="card">
+              <div class="card-header">
+                <h2><i class="ti ti-package-export" style="font-size:16px;color:var(--warn);vertical-align:-2px;"></i> Recent consumes</h2>
+                <span class="badge badge-amber" id="consume-count"></span>
+              </div>
+              <div style="overflow-y:auto;max-height:420px;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Location</th>
+                      <th>Item</th>
+                      <th>PO#</th>
+                      <th>Qty</th>
+                      <th>User</th>
+                      <th>Date</th>
+                      <th style="text-align:right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="consumes-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ZONES ── -->
+      <div id="page-zones" class="page">
+        <div class="zones-inner">
+          <div class="zones-toolbar">
+            <nav class="breadcrumb" id="zone-breadcrumb"></nav>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+              <div class="grid-legend">
+                <div class="legend-item">
+                  <div class="legend-swatch" style="background:var(--success-bg);border:1px solid #a7d9bc;"></div>
+                  Empty
+                </div>
+                <div class="legend-item">
+                  <div class="legend-swatch" style="background:var(--danger-bg);border:1px solid #f5b7b1;"></div>
+                  Occupied
+                </div>
+              </div>
+              <span class="badge badge-blue" id="zone-cap-pct"></span>
+            </div>
+          </div>
+          <div class="zone-pills" id="zone-pills"></div>
+          <div class="shelf-tabs" id="shelf-tabs"></div>
+          <div class="grid-wrap">
+            <div id="grid-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div id="page-users" class="page">
+        <div class="users-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+            <div>
+              <h1 class="page-title">User management</h1>
+              <p class="page-subtitle" id="users-subtitle"></p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="showAddUserForm()">
+              <i class="ti ti-user-plus"></i> Add user
+            </button>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>System users</h2></div>
+            <table class="data-table">
+              <thead><tr>
+                <th>User</th>
+                <th>Role</th>
+                <th style="text-align:right;">Actions</th>
+              </tr></thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SEARCH ── -->
+      <div id="page-search" class="page">
+        <div class="search-wrap">
+          <div>
+            <h1 style="font-size:16px;margin-bottom:10px;">Search</h1>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="position:relative;flex:1;max-width:480px;">
+                <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:16px;pointer-events:none;"></i>
+                <input type="text" id="global-search" placeholder="Location code, item number, or PO#…"
+                       style="padding-left:34px;"
+                       onkeydown="if(event.key==='Enter')doSearch()"/>
+              </div>
+              <button class="btn btn-primary" onclick="doSearch()">
+                <i class="ti ti-search"></i> Search
+              </button>
+              <span class="badge badge-gray" id="search-count" style="margin-left:4px;"></span>
+            </div>
+          </div>
+          <div class="search-table-wrap">
+            <div id="search-results" style="padding:40px;text-align:center;color:var(--text-3);">
+              <i class="ti ti-search" style="font-size:40px;display:block;margin-bottom:10px;"></i>
+              Enter a location, item number, or PO# to search
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INPUT STOCK ── -->
+      <div id="page-input" class="page">
+        <div class="zones-inner">
+          <div class="zones-toolbar">
+            <nav class="breadcrumb" id="input-breadcrumb"></nav>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+              <div class="grid-legend">
+                <div class="legend-item">
+                  <div class="legend-swatch" style="background:var(--success-bg);border:1px solid #a7d9bc;"></div>
+                  Empty
+                </div>
+                <div class="legend-item">
+                  <div class="legend-swatch" style="background:var(--danger-bg);border:1px solid #f5b7b1;"></div>
+                  Occupied
+                </div>
+              </div>
+              <span class="badge badge-blue" id="input-cap-pct"></span>
+            </div>
+          </div>
+          <div class="zone-pills" id="input-zone-pills"></div>
+          <div class="shelf-tabs" id="input-shelf-tabs"></div>
+          <div class="grid-wrap">
+            <div id="input-grid-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONSUME STOCK ── -->
+      <div id="page-consume" class="page">
+        <div style="display:flex;flex-direction:column;flex:1;min-height:0;padding:24px;gap:16px;">
+          <div>
+            <h1 class="page-title">Consume Stock</h1>
+            <p class="page-subtitle">Enter a part number and quantity — the system will suggest locations using FIFO (oldest first).</p>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;max-width:280px;">
+              <label for="fifo-item">Part number (Artikelnummer)</label>
+              <input type="text" id="fifo-item" placeholder="e.g. SKU-9921-X" onkeydown="if(event.key==='Enter')doFifoSearch()"/>
+            </div>
+            <div class="form-group" style="width:140px;">
+              <label for="fifo-qty">Quantity to consume</label>
+              <input type="number" id="fifo-qty" min="1" value="1" style="text-align:center;font-weight:600;font-family:var(--mono);" onkeydown="if(event.key==='Enter')doFifoSearch()"/>
+            </div>
+            <button class="btn btn-primary" onclick="doFifoSearch()" style="height:36px;">
+              <i class="ti ti-search"></i> Find stock
+            </button>
+          </div>
+
+          <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;">
+            <div class="card-header" id="fifo-header" style="display:none;">
+              <h2 id="fifo-title">FIFO Suggestion</h2>
+              <span class="badge badge-blue" id="fifo-summary"></span>
+            </div>
+            <div style="flex:1;overflow-y:auto;" id="fifo-body">
+              <div style="padding:60px 0;text-align:center;color:var(--text-3);">
+                <i class="ti ti-arrow-bar-to-down" style="font-size:48px;display:block;margin-bottom:10px;"></i>
+                <div style="font-size:15px;font-weight:500;margin-bottom:4px;">FIFO consumption</div>
+                <div style="font-size:13px;">Search for a part number to see stock locations sorted oldest-first</div>
+              </div>
+            </div>
+            <div id="fifo-footer" style="display:none;padding:12px 16px;border-top:1px solid var(--border);gap:8px;justify-content:flex-end;align-items:center;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
   </div>
-</aside>
-
-<!-- Main content area -->
-<main class="pl-64 pt-touch-target h-screen flex flex-col overflow-hidden">
-
-<!-- ========== DASHBOARD ========== -->
-<div id="page-dashboard" class="page active fade-in">
-<div class="p-container-margin max-w-7xl mx-auto space-y-xl">
-  <section>
-    <h1 class="font-headline-lg text-headline-lg text-primary">Zone Overview</h1>
-    <p class="font-body-md text-on-surface-variant">Real-time capacity tracking for Zone Alpha-9.</p>
-  </section>
-  <section id="zone-cards" class="grid grid-cols-1 md:grid-cols-3 gap-lg"></section>
-  <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-md overflow-hidden">
-    <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
-      <h2 class="font-headline-md text-headline-md text-primary">Recent Bookings</h2>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead class="bg-surface-container-low border-b border-outline-variant">
-          <tr>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Location</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Action</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Item No.</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">PO#</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Qty</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">User</th>
-            <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-xs">Timestamp</th>
-          </tr>
-        </thead>
-        <tbody id="movements-tbody" class="divide-y divide-outline-variant"></tbody>
-      </table>
-    </div>
-  </section>
-</div>
 </div>
 
-<!-- ========== ZONES / GRID ========== -->
-<div id="page-zones" class="page fade-in flex flex-col flex-1 min-h-0">
-<div class="px-md pt-sm flex flex-col flex-1 min-h-0">
-  <!-- Top bar: breadcrumb + zone pills + shelf tabs + legend — compact -->
-  <div class="flex items-center gap-md mb-sm flex-wrap">
-    <nav class="flex items-center gap-xs text-on-surface-variant text-sm" id="zone-breadcrumb"></nav>
-    <div class="flex items-center bg-surface-container-highest px-sm py-1 rounded-lg border border-outline-variant gap-xs">
-      <span class="text-xs text-on-surface">Capacity</span>
-      <span class="text-xs font-bold text-secondary" id="zone-cap-pct"></span>
-    </div>
-    <div class="flex items-center gap-sm ml-auto">
-      <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-sm bg-tertiary-container border border-on-tertiary-container/30"></div><span class="text-xs uppercase">Empty</span></div>
-      <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-sm bg-error-container border border-error"></div><span class="text-xs uppercase">Occupied</span></div>
-    </div>
-  </div>
+<!-- ══════════════════════════════
+     MODALS
+══════════════════════════════ -->
 
-  <!-- Zone pills -->
-  <div class="flex gap-xs mb-sm" id="zone-pills"></div>
-
-  <!-- Shelf tabs -->
-  <div class="overflow-x-auto flex gap-xs mb-sm pb-1" id="shelf-tabs"></div>
-
-  <!-- Grid area — fills remaining height -->
-  <div class="flex-1 min-h-0 bg-surface-container-low rounded-xl border border-outline-variant shadow-md overflow-auto" id="grid-container"></div>
-</div>
-</div>
-
-<!-- ========== USERS (Admin only) ========== -->
-<div id="page-users" class="page fade-in">
-<div class="p-container-margin max-w-7xl mx-auto space-y-xl">
-  <div class="flex flex-col md:flex-row md:items-end justify-between mb-xl gap-md">
-    <div>
-      <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">User Management</h1>
-      <p class="text-on-surface-variant font-body-md">Configure administrative access and grid distribution settings.</p>
+<!-- Cell Details -->
+<div class="modal-backdrop hidden" id="modal-cell">
+  <div class="modal fade-in">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-cell-title"></div>
+        <div class="modal-subtitle" id="modal-cell-badges"></div>
+      </div>
+      <button class="btn-icon btn-sm" onclick="closeModal('modal-cell')"><i class="ti ti-x"></i></button>
     </div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-md overflow-hidden">
-    <div class="p-md bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
-      <h3 class="font-title-lg text-title-lg text-primary">System Users</h3>
-      <button class="flex items-center gap-xs bg-secondary text-on-secondary px-md py-xs rounded font-label-md text-label-md hover:brightness-110 shadow-sm" onclick="showAddUserForm()">
-        <span class="material-symbols-outlined text-[20px]">person_add</span> Add User
-      </button>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-surface-container-high text-on-surface-variant">
-            <th class="p-md font-label-md text-label-md border-b border-outline-variant">User</th>
-            <th class="p-md font-label-md text-label-md border-b border-outline-variant">Role</th>
-            <th class="p-md font-label-md text-label-md border-b border-outline-variant text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="users-tbody" class="divide-y divide-outline-variant"></tbody>
-      </table>
-    </div>
+    <div class="modal-body" id="modal-cell-body"></div>
+    <div class="modal-footer" id="modal-cell-footer"></div>
   </div>
 </div>
-</div>
 
-<!-- ========== SEARCH RESULTS ========== -->
-<div id="page-search" class="page fade-in">
-<div class="px-container-margin pt-sm flex flex-col flex-1 min-h-0">
-  <div class="flex items-center gap-md mb-md">
-    <button onclick="showPage('zones')" class="flex items-center gap-xs text-on-surface-variant hover:text-primary transition-colors">
-      <span class="material-symbols-outlined text-[20px]">arrow_back</span>
-      <span class="font-label-md text-label-md">Back</span>
-    </button>
-    <h1 class="font-headline-md text-headline-md text-primary">Search Results</h1>
-    <span id="search-count" class="px-sm py-1 bg-surface-container rounded-full font-label-md text-label-md text-on-surface-variant"></span>
-  </div>
-  <div id="search-results" class="flex-1 min-h-0 overflow-auto space-y-xs pb-md"></div>
-</div>
-</div>
-
-</main>
-</div>
-
-<!-- ==================== MODALS ==================== -->
-
-<!-- Cell Details Modal -->
-<div id="modal-cell" class="fixed inset-0 z-[60] bg-primary/40 backdrop-blur-sm hidden flex items-center justify-center p-md">
-<div class="bg-surface-container-lowest w-full max-w-[600px] rounded-xl shadow-2xl overflow-hidden border-t-4 border-primary fade-in">
-  <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
-    <div>
-      <h2 class="font-headline-md text-headline-md text-primary" id="modal-cell-title"></h2>
-      <div class="flex gap-xs mt-xs" id="modal-cell-badges"></div>
+<!-- Booking -->
+<div class="modal-backdrop hidden" id="modal-booking">
+  <div class="modal fade-in">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Book location</div>
+        <div class="modal-subtitle" id="booking-location-title"></div>
+      </div>
+      <button class="btn-icon btn-sm" onclick="closeModal('modal-booking')"><i class="ti ti-x"></i></button>
     </div>
-    <button class="w-touch-target h-touch-target flex items-center justify-center hover:bg-surface-container-high rounded-full" onclick="closeModal('modal-cell')">
-      <span class="material-symbols-outlined">close</span>
-    </button>
+    <form class="modal-body" onsubmit="return handleBookIn(event)">
+      <div class="form-group">
+        <label><i class="ti ti-truck" style="font-size:14px;vertical-align:-1px;"></i> Select ERP delivery</label>
+        <div class="erp-list-wrap" id="erp-delivery-list">
+          <div style="padding:20px;text-align:center;color:var(--text-3);font-size:13px;">Loading deliveries…</div>
+        </div>
+      </div>
+      <hr class="form-sep"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="book-item">Item number</label>
+          <input type="text" id="book-item" placeholder="SKU-9921-X" required/>
+        </div>
+        <div class="form-group">
+          <label for="book-type">Item type</label>
+          <select id="book-type"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="book-batch">PO# (Purchase Order)</label>
+          <input type="text" id="book-batch" placeholder="PO-2026-001" required/>
+        </div>
+        <div class="form-group">
+          <label for="book-qty">Quantity</label>
+          <input type="number" id="book-qty" min="1" value="1" required style="text-align:center;font-weight:600;font-size:16px;font-family:var(--mono);"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="book-desc">Notes</label>
+        <textarea id="book-desc" rows="2" placeholder="Handling instructions or additional notes…"></textarea>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border);margin:0 -16px -16px;padding:12px 16px;">
+        <button class="btn btn-ghost" type="button" onclick="closeModal('modal-booking')">Cancel</button>
+        <button class="btn btn-primary" type="submit"><i class="ti ti-bookmark"></i> Book location</button>
+      </div>
+    </form>
   </div>
-  <div class="p-lg space-y-md max-h-[500px] overflow-y-auto bg-surface-bright" id="modal-cell-body"></div>
-  <div class="p-lg bg-surface-container-low border-t border-outline-variant" id="modal-cell-footer"></div>
-</div>
 </div>
 
-<!-- Booking Modal -->
-<div id="modal-booking" class="fixed inset-0 z-[60] bg-primary/40 backdrop-blur-sm hidden flex items-center justify-center p-md">
-<div class="bg-surface-container-lowest w-full max-w-[600px] rounded-xl shadow-2xl border-t-4 border-primary overflow-hidden fade-in">
-  <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
-    <div>
-      <h3 class="font-headline-md text-headline-md text-primary" id="booking-location-title"></h3>
-      <p class="font-label-md text-label-md text-on-surface-variant">Location Booking Interface</p>
+<!-- Consume Qty -->
+<div class="modal-backdrop hidden" id="modal-consume">
+  <div class="modal sm fade-in">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Consume stock</div>
+        <div class="modal-subtitle">Enter quantity to deduct from current level</div>
+      </div>
+      <button class="btn-icon btn-sm" onclick="closeModal('modal-consume')"><i class="ti ti-x"></i></button>
     </div>
-    <button class="text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full" onclick="closeModal('modal-booking')">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-  </div>
-  <form class="p-lg space-y-md" onsubmit="return handleBookIn(event)">
-    <!-- ERP Delivery Selector -->
-    <div class="flex flex-col gap-xs">
-      <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-sm">
-        <span class="material-symbols-outlined text-[18px]">local_shipping</span>
-        Select ERP Delivery
-      </label>
-      <div id="erp-delivery-list" class="max-h-[180px] overflow-y-auto border border-outline-variant rounded-lg bg-surface-container-low">
-        <p class="p-md text-on-surface-variant font-body-md text-center">Loading deliveries...</p>
+    <div class="modal-body" style="gap:8px;">
+      <div class="form-group">
+        <label for="consume-qty-input">Quantity to deduct</label>
+        <input id="consume-qty-input" type="number" min="1" placeholder="0"
+               style="font-size:28px;font-weight:600;text-align:center;font-family:var(--mono);height:56px;"/>
       </div>
     </div>
-    <hr class="border-outline-variant"/>
-    <div class="grid grid-cols-2 gap-md">
-      <div class="flex flex-col gap-xs">
-        <label class="font-label-md text-label-md text-on-surface-variant">Item Number</label>
-        <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md" placeholder="e.g. SKU-9921-X" type="text" id="book-item" required/>
-      </div>
-      <div class="flex flex-col gap-xs">
-        <label class="font-label-md text-label-md text-on-surface-variant">Item Type</label>
-        <select class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md" id="book-type">
-          <option value="Raw">Raw</option>
-          <option value="Finished-External">Finished-External</option>
-          <option value="Finished-Internal">Finished-Internal</option>
-        </select>
-      </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-consume')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmConsume()"><i class="ti ti-check"></i> Confirm</button>
     </div>
-    <div class="grid grid-cols-2 gap-md">
-      <div class="flex flex-col gap-xs">
-        <label class="font-label-md text-label-md text-on-surface-variant">PO# (Purchase Order)</label>
-        <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md" placeholder="PO-2026-001" type="text" id="book-batch" required/>
-      </div>
-      <div class="flex flex-col gap-xs">
-        <label class="font-label-md text-label-md text-on-surface-variant">Quantity</label>
-        <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md text-center font-bold" type="number" min="1" value="1" id="book-qty" required/>
-      </div>
-    </div>
-    <div class="flex flex-col gap-xs">
-      <label class="font-label-md text-label-md text-on-surface-variant">Description</label>
-      <textarea class="p-md rounded-lg border-outline border bg-surface-container-low focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-md" placeholder="Enter additional handling instructions or notes..." rows="3" id="book-desc"></textarea>
-    </div>
-    <div class="pt-md flex flex-row-reverse gap-sm">
-      <button class="flex-1 h-touch-target bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-md hover:brightness-110 active:scale-95 uppercase tracking-wider" type="submit">Book Location</button>
-      <button class="flex-1 h-touch-target bg-transparent text-on-surface-variant border border-outline-variant font-label-md text-label-md rounded-lg hover:bg-surface-container-high" type="button" onclick="closeModal('modal-booking')">Cancel</button>
-    </div>
-  </form>
-</div>
+  </div>
 </div>
 
-<!-- Consume Qty Modal -->
-<div id="modal-consume" class="fixed inset-0 z-[70] bg-black/60 hidden flex items-center justify-center p-md">
-<div class="bg-white w-full max-w-[400px] rounded-xl shadow-2xl p-lg border-t-4 border-secondary fade-in">
-  <h3 class="font-headline-md text-headline-md text-primary mb-md">Consume Quantity</h3>
-  <p class="font-body-md text-body-md text-on-surface-variant mb-lg">Enter amount to remove from current stock level.</p>
-  <div class="mb-xl">
-    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Quantity to Deduct</label>
-    <input class="w-full h-[56px] text-[24px] font-bold border border-outline rounded-lg px-md focus:ring-2 focus:ring-secondary focus:border-secondary outline-none" id="consume-qty-input" placeholder="0" type="number" min="1"/>
+<!-- Add User -->
+<div class="modal-backdrop hidden" id="modal-add-user">
+  <div class="modal sm fade-in">
+    <div class="modal-header">
+      <div class="modal-title">Add user</div>
+      <button class="btn-icon btn-sm" onclick="closeModal('modal-add-user')"><i class="ti ti-x"></i></button>
+    </div>
+    <form class="modal-body" onsubmit="return handleAddUser(event)">
+      <div class="form-group">
+        <label for="new-username">Username</label>
+        <input type="text" id="new-username" required/>
+      </div>
+      <div class="form-group">
+        <label for="new-password">Password</label>
+        <input type="password" id="new-password" required/>
+      </div>
+      <div class="form-group">
+        <label for="new-role">Role</label>
+        <select id="new-role"></select>
+      </div>
+      <div class="login-error" id="add-user-error" style="display:none;"></div>
+      <div class="modal-footer" style="border-top:1px solid var(--border);margin:0 -16px -16px;padding:12px 16px;">
+        <button class="btn btn-ghost" type="button" onclick="closeModal('modal-add-user')">Cancel</button>
+        <button class="btn btn-primary" type="submit"><i class="ti ti-user-plus"></i> Create user</button>
+      </div>
+    </form>
   </div>
-  <div class="flex gap-md">
-    <button class="flex-1 h-touch-target border border-outline rounded-lg font-label-md text-label-md" onclick="closeModal('modal-consume')">Cancel</button>
-    <button class="flex-1 h-touch-target bg-secondary text-on-secondary rounded-lg font-label-md text-label-md shadow-md" onclick="confirmConsume()">Confirm</button>
-  </div>
-</div>
-</div>
-
-<!-- Add User Modal -->
-<div id="modal-add-user" class="fixed inset-0 z-[60] bg-primary/40 backdrop-blur-sm hidden flex items-center justify-center p-md">
-<div class="bg-surface-container-lowest w-full max-w-[440px] rounded-xl shadow-2xl border-t-4 border-primary overflow-hidden fade-in">
-  <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center">
-    <h3 class="font-headline-md text-headline-md text-primary">Add User</h3>
-    <button class="text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full" onclick="closeModal('modal-add-user')">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-  </div>
-  <form class="p-lg space-y-md" onsubmit="return handleAddUser(event)">
-    <div class="flex flex-col gap-xs">
-      <label class="font-label-md text-label-md text-on-surface-variant">Username</label>
-      <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary outline-none font-body-md" type="text" id="new-username" required/>
-    </div>
-    <div class="flex flex-col gap-xs">
-      <label class="font-label-md text-label-md text-on-surface-variant">Password</label>
-      <input class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary outline-none font-body-md" type="password" id="new-password" required/>
-    </div>
-    <div class="flex flex-col gap-xs">
-      <label class="font-label-md text-label-md text-on-surface-variant">Role</label>
-      <select class="h-touch-target rounded-lg border-outline border bg-surface-container-low px-md focus:ring-2 focus:ring-secondary outline-none font-body-md" id="new-role">
-        <option value="Consumer">Consumer</option>
-        <option value="Logistics">Logistics</option>
-        <option value="Admin">Admin</option>
-      </select>
-    </div>
-    <div id="add-user-error" class="hidden text-error font-label-md bg-error-container/30 p-sm rounded-lg"></div>
-    <div class="pt-md flex gap-sm">
-      <button class="flex-1 h-touch-target border border-outline rounded-lg font-label-md text-label-md" type="button" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="flex-1 h-touch-target bg-secondary text-on-secondary rounded-lg font-label-md text-label-md shadow-md" type="submit">Create User</button>
-    </div>
-  </form>
-</div>
 </div>
 
 <!-- Toast -->
-<div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[80] hidden">
-  <div class="bg-inverse-surface text-inverse-on-surface px-lg py-sm rounded-xl shadow-lg font-label-md text-label-md flex items-center gap-sm">
-    <span class="material-symbols-outlined text-[20px]" id="toast-icon">check_circle</span>
-    <span id="toast-msg"></span>
-  </div>
+<div id="toast" class="hidden">
+  <i class="ti ti-check" id="toast-icon"></i>
+  <span id="toast-msg"></span>
 </div>
 
 <script>
+// ── Constants ──
+const APP_NAME = 'WMS Grid Locator';
+const WAREHOUSE_LABEL = 'Zone Alpha-9';
+const ROLES = ['Admin', 'Logistics', 'Consumer'];
+const ITEM_TYPES = [
+  { value: 'Raw', label: 'Raw' },
+  { value: 'Finished-External', label: 'Finished — External' },
+  { value: 'Finished-Internal', label: 'Finished — Internal' },
+];
+const CAPACITY_THRESHOLDS = { danger: 85, warn: 60 };
+const MOVEMENTS_LIMIT = 20;
+
+// ── Helpers ──
+function canBookIn() { return session.role === 'Admin' || session.role === 'Logistics'; }
+
+function avatar(name, size = 28, fontSize = 11) {
+  const initials = name.substring(0,2).toUpperCase();
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--accent-bg);color:var(--accent-dk);font-size:${fontSize}px;font-weight:600;display:flex;align-items:center;justify-content:center;">${initials}</div>`;
+}
+
+function locCode(code) {
+  return `<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);">${code}</span>`;
+}
+
+function batchCode(code) {
+  return `<span style="font-family:var(--mono);font-size:12px;color:var(--text-2);">${code}</span>`;
+}
+
+function roleOptions(selected = '') {
+  return ROLES.map(r => `<option value="${r}"${r === selected ? ' selected' : ''}>${r}</option>`).join('');
+}
+
+function itemTypeOptions(selected = '') {
+  return ITEM_TYPES.map(t => `<option value="${t.value}"${t.value === selected ? ' selected' : ''}>${t.label}</option>`).join('');
+}
+
 // ── State ──
 let session = { loggedIn: false, username: '', role: '' };
 let currentZone = null;
@@ -477,7 +981,7 @@ let currentShelf = null;
 let currentCellCode = null;
 let consumeBookingId = null;
 
-// ── pywebview API bridge ──
+// ── pywebview bridge ──
 async function api(method, ...args) {
   return await window.pywebview.api[method](...args);
 }
@@ -494,92 +998,135 @@ async function handleLogin(e) {
   } else {
     const el = document.getElementById('login-error');
     el.textContent = res.error;
-    el.classList.remove('hidden');
+    el.style.display = 'block';
   }
   return false;
 }
 
 function enterApp() {
-  document.getElementById('page-login').classList.remove('active');
+  document.getElementById('page-title').textContent = APP_NAME;
+  document.getElementById('login-app-name').textContent = APP_NAME;
+  document.getElementById('login-subtitle').textContent = `${WAREHOUSE_LABEL} — Warehouse Management`;
+  document.getElementById('topbar-app-name').textContent = APP_NAME;
+  document.getElementById('sidebar-warehouse-label').textContent = WAREHOUSE_LABEL;
+  document.getElementById('dash-subtitle').textContent = `${WAREHOUSE_LABEL} · real-time capacity overview`;
+  document.getElementById('users-subtitle').textContent = `System access roles for ${WAREHOUSE_LABEL}`;
+  document.getElementById('book-type').innerHTML = itemTypeOptions();
+  document.getElementById('new-role').innerHTML = roleOptions();
+
   document.getElementById('page-login').style.display = 'none';
   document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('header-avatar').textContent = session.username.substring(0,2).toUpperCase();
   document.getElementById('header-username').textContent = session.username;
-  document.getElementById('header-role').textContent = session.role;
-  document.getElementById('sidebar-name').textContent = session.username;
-  document.getElementById('sidebar-avatar').textContent = session.username.substring(0,2).toUpperCase();
   if (session.role === 'Admin') {
-    document.getElementById('nav-users').style.display = '';
+    document.getElementById('nav-users').classList.remove('hidden');
   }
   showPage('dashboard');
 }
 
 async function doLogout() {
   await api('logout');
-  session = { loggedIn: false, username: '', role: '' };
+  session = {};
   document.getElementById('app-shell').classList.add('hidden');
-  document.getElementById('page-login').style.display = '';
-  document.getElementById('page-login').classList.add('active');
+  document.getElementById('page-login').style.display = 'flex';
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
-  document.getElementById('login-error').classList.add('hidden');
+  document.getElementById('login-error').style.display = 'none';
 }
 
 // ── Navigation ──
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(l => { l.classList.remove('active-nav'); l.classList.add('text-on-surface-variant'); });
-  const links = document.querySelectorAll('.nav-link');
-  links.forEach(l => { if (l.getAttribute('onclick')?.includes(name)) { l.classList.add('active-nav'); l.classList.remove('text-on-surface-variant'); }});
+  const pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
 
   if (name === 'dashboard') loadDashboard();
   else if (name === 'zones') loadZones();
+  else if (name === 'input') loadInputStock();
   else if (name === 'users') loadUsers();
 }
 
 // ── Dashboard ──
 async function loadDashboard() {
   const zones = await api('get_zones_overview');
-  const icons = { G: 'inventory', F: 'package_2', SP: 'report' };
-  const colors = { G: 'primary', F: 'on-tertiary-container', SP: 'secondary' };
+  const icons = { G: 'ti-box', F: 'ti-package', SP: 'ti-alert-circle' };
   const container = document.getElementById('zone-cards');
-  container.innerHTML = zones.map(z => `
-    <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm tactile-card flex flex-col gap-md cursor-pointer" onclick="goToZone('${z.code}')">
-      <div class="flex justify-between items-start">
-        <div class="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center">
-          <span class="material-symbols-outlined text-3xl text-${colors[z.code] || 'primary'}" style="font-variation-settings: 'FILL' 1;">${icons[z.code] || 'inventory'}</span>
-        </div>
-        <span class="px-sm py-1 bg-surface-container-high text-primary font-label-md rounded-full text-xs uppercase tracking-wider">Zone ${z.code}</span>
+  container.innerHTML = zones.map(z => {
+    const pct = z.percent;
+    const fillColor = pct > CAPACITY_THRESHOLDS.danger ? 'var(--danger)' : pct > CAPACITY_THRESHOLDS.warn ? 'var(--warn)' : 'var(--accent)';
+    return `
+    <div class="zone-card" onclick="goToZone('${z.code}')">
+      <div class="zone-card-top">
+        <div class="zone-icon"><i class="ti ${icons[z.code]||'ti-box'}"></i></div>
+        <span class="badge badge-gray">Zone ${z.code}</span>
       </div>
-      <div>
-        <h3 class="font-title-lg text-title-lg text-primary">${z.display_name}</h3>
-        <div class="flex justify-between items-end mt-sm">
-          <span class="font-body-md text-on-surface-variant">${z.occupied} / ${z.total} locations</span>
-          <span class="font-label-md text-${colors[z.code] || 'primary'}">${z.percent}%</span>
-        </div>
-        <div class="w-full bg-outline-variant h-3 rounded-full mt-2 overflow-hidden">
-          <div class="bg-${colors[z.code] || 'primary'} h-full rounded-full transition-all duration-1000" style="width: ${z.percent}%;"></div>
-        </div>
+      <div class="zone-name">${z.display_name}</div>
+      <div class="zone-stats">${z.occupied} / ${z.total} locations occupied</div>
+      <div class="zone-pct">${pct}% used</div>
+      <div class="progress">
+        <div class="progress-fill" style="width:${pct}%;background:${fillColor};"></div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
-  const movements = await api('get_recent_movements', 20);
-  const tbody = document.getElementById('movements-tbody');
-  tbody.innerHTML = movements.map(m => `
-    <tr class="hover:bg-surface-container-high transition-colors">
-      <td class="px-lg py-md font-code-md text-primary">${m.location_code}</td>
-      <td class="px-lg py-md"><span class="px-sm py-1 rounded-full text-xs font-bold uppercase ${m.action === 'BookIn' ? 'bg-tertiary-fixed/20 text-on-tertiary-container' : m.action === 'Consume' ? 'bg-secondary-fixed/30 text-secondary' : 'bg-error-container text-on-error-container'}">${m.action}</span></td>
-      <td class="px-lg py-md font-body-md">${m.item_number}</td>
-      <td class="px-lg py-md font-body-md text-on-surface-variant">${m.batch_number}</td>
-      <td class="px-lg py-md font-label-md">${m.qty}</td>
-      <td class="px-lg py-md"><div class="flex items-center gap-xs"><div class="w-6 h-6 rounded-full bg-primary text-[10px] flex items-center justify-center text-white">${m.user.substring(0,2).toUpperCase()}</div><span class="font-body-md text-xs">${m.user}</span></div></td>
-      <td class="px-lg py-md font-body-md text-on-surface-variant text-xs">${m.timestamp}</td>
-    </tr>
-  `).join('');
+  const [inputs, consumes] = await Promise.all([
+    api('get_recent_inputs', MOVEMENTS_LIMIT),
+    api('get_recent_consumes', MOVEMENTS_LIMIT),
+  ]);
+
+  document.getElementById('input-count').textContent = `${inputs.length} recent`;
+  document.getElementById('consume-count').textContent = `${consumes.length} recent`;
+
+  function activityRow(m) {
+    return `<tr>
+      <td>${locCode(m.location_code)}</td>
+      <td style="font-size:13px;font-weight:500;">${m.item_number}</td>
+      <td>${batchCode(m.batch_number)}</td>
+      <td style="font-weight:600;">${m.qty}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${avatar(m.user, 22, 9)}
+          <span style="font-size:12px;">${m.user}</span>
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--text-3);font-family:var(--mono);">${m.timestamp}</td>
+    </tr>`;
+  }
+
+  function consumeRow(m) {
+    return `<tr>
+      <td>${locCode(m.location_code)}</td>
+      <td style="font-size:13px;font-weight:500;">${m.item_number}</td>
+      <td>${batchCode(m.batch_number)}</td>
+      <td style="font-weight:600;">${m.qty}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${avatar(m.user, 22, 9)}
+          <span style="font-size:12px;">${m.user}</span>
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--text-3);font-family:var(--mono);">${m.timestamp}</td>
+      <td style="text-align:right;">
+        <button class="btn btn-ghost btn-sm" onclick="revertConsume('${m.id}')">
+          <i class="ti ti-arrow-back-up"></i> Revert
+        </button>
+      </td>
+    </tr>`;
+  }
+
+  document.getElementById('inputs-tbody').innerHTML = inputs.length
+    ? inputs.map(activityRow).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-3);">No recent bookings</td></tr>';
+
+  document.getElementById('consumes-tbody').innerHTML = consumes.length
+    ? consumes.map(consumeRow).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-3);">No recent consumes</td></tr>';
 }
 
-// ── Zones Grid ──
+// ── Zones ──
 function goToZone(code) {
   currentZone = code;
   currentShelf = null;
@@ -591,34 +1138,27 @@ async function loadZones() {
   const zones = cfg.zones;
   if (!currentZone) currentZone = Object.keys(zones)[0];
 
-  // Zone pills
-  const pills = document.getElementById('zone-pills');
-  pills.innerHTML = Object.entries(zones).map(([code, z]) =>
-    `<button class="px-lg py-sm rounded-xl font-bold transition-colors ${code === currentZone ? 'border-2 border-secondary bg-secondary-container text-on-secondary-container shadow-sm' : 'border border-outline bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'}" onclick="currentZone='${code}';currentShelf=null;loadZones()">${z.display_name} (${code})</button>`
+  document.getElementById('zone-pills').innerHTML = Object.entries(zones).map(([code, z]) =>
+    `<button class="pill${code === currentZone ? ' active' : ''}" onclick="currentZone='${code}';currentShelf=null;loadZones()">${z.display_name} (${code})</button>`
   ).join('');
 
   const shelves = Object.keys(zones[currentZone].shelves);
   if (!currentShelf) currentShelf = shelves[0];
 
-  // Shelf tabs
-  const tabs = document.getElementById('shelf-tabs');
-  tabs.innerHTML = shelves.map(s =>
-    `<button class="flex-shrink-0 px-xl py-sm rounded-xl font-bold transition-colors ${s === currentShelf ? 'border-2 border-secondary bg-secondary-container text-on-secondary-container shadow-sm' : 'border border-outline bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'}" onclick="currentShelf='${s}';loadGrid()">${s}</button>`
+  document.getElementById('shelf-tabs').innerHTML = shelves.map(s =>
+    `<button class="shelf-tab${s === currentShelf ? ' active' : ''}" onclick="currentShelf='${s}';loadZones()">${s}</button>`
   ).join('');
 
-  // Breadcrumb
   document.getElementById('zone-breadcrumb').innerHTML = `
-    <span class="font-label-md text-label-md cursor-pointer hover:text-secondary" onclick="showPage('dashboard')">Warehouse</span>
-    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-    <span class="font-label-md text-label-md text-secondary">Zone ${currentZone}</span>
-    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-    <span class="font-label-md text-label-md font-bold">${currentShelf}</span>
-  `;
+    <a onclick="showPage('dashboard')">Warehouse</a>
+    <i class="ti ti-chevron-right"></i>
+    <a onclick="loadZones()">Zone ${currentZone}</a>
+    <i class="ti ti-chevron-right"></i>
+    <span class="current">${currentShelf}</span>`;
 
-  // Capacity
   const overview = await api('get_zones_overview');
   const thisZone = overview.find(z => z.code === currentZone);
-  document.getElementById('zone-cap-pct').textContent = thisZone ? thisZone.percent + '%' : '';
+  document.getElementById('zone-cap-pct').textContent = thisZone ? thisZone.percent + '% capacity' : '';
 
   await loadGrid();
 }
@@ -628,26 +1168,23 @@ async function loadGrid() {
   const { sections, rows, occupied } = grid;
   const container = document.getElementById('grid-container');
 
-  const gap = 3;
-  const rowLabelW = 32;
-  const headerH = 22;
-  let html = `<div class="grid w-full h-full" style="grid-template-columns: ${rowLabelW}px repeat(${sections}, 1fr); grid-template-rows: ${headerH}px repeat(${rows}, 1fr); gap: ${gap}px; padding: ${gap}px;">`;
-  // Header
+  const gap = 4;
+  const rowLabelW = 28;
+  const headerH = 20;
+
+  let html = `<div style="display:grid;grid-template-columns:${rowLabelW}px repeat(${sections},1fr);grid-template-rows:${headerH}px repeat(${rows},1fr);gap:${gap}px;height:100%;min-height:300px;">`;
   html += `<div></div>`;
   for (let s = 1; s <= sections; s++) {
-    html += `<div class="flex items-center justify-center text-[10px] font-semibold text-on-surface-variant leading-none">${String(s).padStart(2,'0')}</div>`;
+    html += `<div class="grid-col-header">${String(s).padStart(2,'0')}</div>`;
   }
-  // Rows (top = highest)
   for (let r = rows; r >= 1; r--) {
-    html += `<div class="flex items-center justify-end pr-1 font-bold text-primary text-xs">${String(r).padStart(2,'0')}</div>`;
+    html += `<div class="grid-row-label">${String(r).padStart(2,'0')}</div>`;
     for (let s = 1; s <= sections; s++) {
       const locCode = `${currentShelf}-${String(s).padStart(2,'0')}-${String(r).padStart(2,'0')}`;
       const isOcc = occupied.includes(locCode);
-      const bgClass = isOcc ? 'bg-error-container border-error' : 'bg-tertiary-container border-on-tertiary-container/30';
-      const textClass = isOcc ? 'text-on-error-container' : 'text-on-tertiary-container';
-      html += `<div class="rounded ${bgClass} border flex flex-col items-center justify-center ${textClass} text-[11px] font-semibold cursor-pointer hover:brightness-90 active:scale-95 transition-transform select-none" onclick="cellClick('${locCode}', ${isOcc})" title="${locCode}">
-        ${String(s).padStart(2,'0')}-${String(r).padStart(2,'0')}
-        ${isOcc ? '<span class="material-symbols-outlined text-[13px] leading-none">inventory_2</span>' : ''}
+      html += `<div class="grid-cell ${isOcc?'occupied':'empty'}" onclick="cellClick('${locCode}',${isOcc})" title="${locCode}">
+        <span>${String(s).padStart(2,'0')}-${String(r).padStart(2,'0')}</span>
+        ${isOcc ? '<i class="ti ti-package" style="font-size:11px;margin-top:1px;"></i>' : ''}
       </div>`;
     }
   }
@@ -655,78 +1192,84 @@ async function loadGrid() {
   container.innerHTML = html;
 }
 
-// ── Cell Click ──
+// ── Cell Click (Grid Zones — read-only) ──
 function cellClick(locCode, isOccupied) {
   currentCellCode = locCode;
   if (isOccupied) {
-    openCellDetails(locCode);
+    openCellDetails(locCode, true);
   } else {
-    if (session.role === 'Admin' || session.role === 'Logistics') {
+    showToast('This cell is empty', 'info');
+  }
+}
+
+// ── Cell Click (Input Stock — booking enabled) ──
+function inputCellClick(locCode, isOccupied) {
+  currentCellCode = locCode;
+  if (isOccupied) {
+    openCellDetails(locCode, false);
+  } else {
+    if (canBookIn()) {
       openBookingModal(locCode);
     } else {
-      showToast('Only Logistics/Admin can book stock in', 'info');
+      showToast('Only Logistics or Admin can book stock in', 'info');
     }
   }
 }
 
-// ── Cell Details Modal ──
-async function openCellDetails(locCode) {
+// ── Cell Details ──
+async function openCellDetails(locCode, readOnly = false) {
   const contents = await api('get_cell_contents', locCode);
-  document.getElementById('modal-cell-title').textContent = locCode + ' — Occupied';
-  document.getElementById('modal-cell-badges').innerHTML = `<span class="px-sm py-1 bg-error-container text-on-error-container rounded-full font-label-md text-label-md uppercase">${contents.length} slot(s)</span>`;
+  document.getElementById('modal-cell-title').textContent = locCode;
+  document.getElementById('modal-cell-badges').textContent = `${contents.length} slot(s) occupied`;
 
   const body = document.getElementById('modal-cell-body');
   if (contents.length === 0) {
-    body.innerHTML = `<div class="flex flex-col items-center justify-center py-xl opacity-60">
-      <span class="material-symbols-outlined text-[64px] mb-md">inventory_2</span>
-      <p class="font-title-lg text-title-lg text-primary">Cell Empty</p>
+    body.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--text-3);">
+      <i class="ti ti-box" style="font-size:40px;display:block;margin-bottom:8px;"></i>
+      Cell is empty
     </div>`;
   } else {
     body.innerHTML = contents.map(b => `
-      <div class="bg-white border border-outline rounded-lg p-md shadow-sm hover:shadow-md transition-all" id="batch-card-${b.id}">
-        <div class="flex justify-between items-start mb-sm">
+      <div class="booking-card">
+        <div class="booking-card-header">
           <div>
-            <span class="font-label-md text-label-md text-on-surface-variant opacity-70 block">Item No.</span>
-            <span class="font-title-lg text-title-lg text-primary">${b.item_number}</span>
+            <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Item no.</div>
+            <div class="booking-card-item">${b.item_number}</div>
           </div>
-          <div class="text-right">
-            <span class="font-label-md text-label-md text-on-surface-variant opacity-70 block">PO#</span>
-            <span class="font-code-md text-code-md bg-surface-container px-sm py-1 rounded">${b.batch_number}</span>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:var(--text-3);">PO#</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);">${b.batch_number}</div>
           </div>
         </div>
-        <div class="grid grid-cols-3 gap-md mb-md p-sm bg-surface-container-low rounded-lg">
-          <div>
-            <span class="font-label-md text-label-md text-on-surface-variant opacity-70">Quantity</span>
-            <p class="font-headline-md text-headline-md text-primary">${b.qty}</p>
+        <div class="booking-card-meta">
+          <div class="booking-meta-field">
+            <div class="meta-label">Qty</div>
+            <div class="meta-val">${b.qty}</div>
           </div>
-          <div>
-            <span class="font-label-md text-label-md text-on-surface-variant opacity-70">Type</span>
-            <p class="font-body-md text-body-md text-primary font-medium">${b.item_type}</p>
+          <div class="booking-meta-field">
+            <div class="meta-label">Type</div>
+            <div class="meta-val" style="font-size:12px;">${b.item_type}</div>
           </div>
-          <div>
-            <span class="font-label-md text-label-md text-on-surface-variant opacity-70">Booked By</span>
-            <p class="font-body-md text-body-md text-primary font-medium">${b.booked_by}</p>
+          <div class="booking-meta-field">
+            <div class="meta-label">Booked by</div>
+            <div class="meta-val" style="font-size:12px;">${b.booked_by}</div>
           </div>
         </div>
-        <div class="flex gap-sm">
-          ${(session.role !== 'Logistics' && session.role !== 'Admin' && session.role !== 'Consumer') ? '' :
-            `<button class="flex-1 bg-primary text-on-primary h-touch-target rounded-lg font-label-md text-label-md flex items-center justify-center gap-xs active:scale-[0.98] transition-transform" onclick="startConsume('${b.id}', ${b.qty})">
-              <span class="material-symbols-outlined text-[20px]">remove_shopping_cart</span> Consume
-            </button>`}
-        </div>
-      </div>
-    `).join('');
+        ${readOnly ? '' : `<button class="btn btn-ghost btn-sm" onclick="startConsume('${b.id}', ${b.qty})">
+          <i class="ti ti-minus"></i> Consume
+        </button>`}
+      </div>`).join('');
   }
 
   const footer = document.getElementById('modal-cell-footer');
-  if ((session.role === 'Admin' || session.role === 'Logistics')) {
+  if (!readOnly && canBookIn()) {
     const maxSlots = await api('get_max_slots');
     if (contents.length < maxSlots) {
-      footer.innerHTML = `<button class="w-full bg-secondary-container text-on-secondary-container h-[56px] rounded-lg font-title-lg text-title-lg shadow-md flex items-center justify-center gap-sm active:scale-[0.98] transition-transform" onclick="closeModal('modal-cell');openBookingModal('${locCode}')">
-        <span class="material-symbols-outlined">add_box</span> Add Batch
+      footer.innerHTML = `<button class="btn btn-primary" style="width:100%;" onclick="closeModal('modal-cell');openBookingModal('${locCode}')">
+        <i class="ti ti-plus"></i> Add batch to this location
       </button>`;
     } else {
-      footer.innerHTML = `<p class="text-center text-on-surface-variant font-label-md">Cell at max capacity (${maxSlots} slots)</p>`;
+      footer.innerHTML = `<p style="text-align:center;font-size:12px;color:var(--text-3);">Cell at max capacity (${maxSlots} slots)</p>`;
     }
   } else {
     footer.innerHTML = '';
@@ -751,23 +1294,25 @@ async function confirmConsume() {
   closeModal('modal-consume');
   if (res.ok) {
     showToast(`Consumed ${qty} units`);
-    await openCellDetails(currentCellCode);
-    await loadGrid();
+    const activePage = document.querySelector('.page.active');
+    if (activePage && activePage.id === 'page-input') {
+      await openCellDetails(currentCellCode, false);
+      await loadInputGrid();
+    } else {
+      await openCellDetails(currentCellCode, true);
+      await loadGrid();
+    }
   }
 }
 
-// ── Book Out ──
-async function doBookOut(bookingId) {
-  const res = await api('book_out', bookingId);
+// ── Revert Consume ──
+async function revertConsume(journalId) {
+  const res = await api('revert_consume', journalId);
   if (res.ok) {
-    showToast('Booked out successfully');
-    const contents = await api('get_cell_contents', currentCellCode);
-    if (contents.length === 0) {
-      closeModal('modal-cell');
-    } else {
-      await openCellDetails(currentCellCode);
-    }
-    await loadGrid();
+    showToast('Stock reverted back to location');
+    loadDashboard();
+  } else {
+    showToast('Revert failed', 'error');
   }
 }
 
@@ -779,57 +1324,49 @@ async function openBookingModal(locCode) {
   document.getElementById('book-batch').value = '';
   document.getElementById('book-qty').value = 1;
   document.getElementById('book-desc').value = '';
-  document.getElementById('book-type').value = 'Raw';
+  document.getElementById('book-type').innerHTML = itemTypeOptions();
+  document.getElementById('book-type').value = ITEM_TYPES[0].value;
+
   const listEl = document.getElementById('erp-delivery-list');
-  listEl.innerHTML = '<p class="p-md text-on-surface-variant font-body-md text-center">Loading deliveries...</p>';
+  listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:13px;">Loading deliveries…</div>';
   document.getElementById('modal-booking').classList.remove('hidden');
 
   const deliveries = await api('get_erp_deliveries');
   if (!deliveries || deliveries.length === 0) {
-    listEl.innerHTML = '<p class="p-md text-on-surface-variant font-body-md text-center">No recent deliveries found</p>';
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:13px;">No recent deliveries found</div>';
   } else {
     listEl.innerHTML = `
-      <table class="w-full text-sm">
-        <thead class="sticky top-0 bg-surface-container z-10">
-          <tr class="text-left text-on-surface-variant font-label-md">
-            <th class="px-sm py-xs">Item</th>
-            <th class="px-sm py-xs">PO#</th>
-            <th class="px-sm py-xs">Qty</th>
-            <th class="px-sm py-xs">Supplier</th>
-            <th class="px-sm py-xs">Date</th>
-          </tr>
-        </thead>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead class="erp-header"><tr>
+          <th>Item</th><th>PO#</th><th>Qty</th><th>Supplier</th><th>Date</th>
+        </tr></thead>
         <tbody>
           ${deliveries.map((d, i) => `
-            <tr class="cursor-pointer hover:bg-secondary-container/40 transition-colors border-t border-outline-variant/50 erp-row"
-                onclick="selectErpDelivery(${i})"
+            <tr class="erp-row" onclick="selectErpDelivery(${i})"
                 data-item="${(d.ITEMNUMBER||'').replace(/"/g,'&quot;')}"
                 data-batch="${(d.PURCHASENUMBER||'').replace(/"/g,'&quot;')}"
                 data-qty="${d.ORDERED||1}"
-                data-desc="${(d.NAME||'').replace(/"/g,'&quot;')} | PO: ${(d.PURCHASENUMBER||'').replace(/"/g,'&quot;')} | ExtRef: ${(d.EXTERNALDELIVERYNOTE||'').replace(/"/g,'&quot;')}">
-              <td class="px-sm py-xs font-medium text-primary">${d.ITEMNUMBER||''}</td>
-              <td class="px-sm py-xs">${d.PURCHASENUMBER||''}</td>
-              <td class="px-sm py-xs font-bold">${d.ORDERED||''}</td>
-              <td class="px-sm py-xs text-on-surface-variant">${d.NAME||''}</td>
-              <td class="px-sm py-xs text-on-surface-variant">${d.DELIVERYDATE ? d.DELIVERYDATE.substring(0,10) : ''}</td>
-            </tr>
-          `).join('')}
+                data-desc="${(d.NAME||'').replace(/"/g,'&quot;')} | PO: ${(d.PURCHASENUMBER||'').replace(/"/g,'&quot;')} | Ref: ${(d.EXTERNALDELIVERYNOTE||'').replace(/"/g,'&quot;')}">
+              <td style="font-weight:600;color:var(--accent);">${d.ITEMNUMBER||''}</td>
+              <td style="font-family:var(--mono);font-size:11px;">${d.PURCHASENUMBER||''}</td>
+              <td style="font-weight:600;">${d.ORDERED||''}</td>
+              <td style="color:var(--text-2);">${d.NAME||''}</td>
+              <td style="color:var(--text-3);font-size:11px;">${d.DELIVERYDATE ? d.DELIVERYDATE.substring(0,10) : ''}</td>
+            </tr>`).join('')}
         </tbody>
       </table>`;
   }
-  document.getElementById('book-item').focus();
 }
 
 function selectErpDelivery(idx) {
+  document.querySelectorAll('#erp-delivery-list .erp-row').forEach(r => r.classList.remove('selected'));
   const rows = document.querySelectorAll('#erp-delivery-list .erp-row');
-  rows.forEach(r => r.classList.remove('bg-secondary-container', 'ring-1', 'ring-secondary'));
   const row = rows[idx];
-  row.classList.add('bg-secondary-container', 'ring-1', 'ring-secondary');
+  row.classList.add('selected');
   document.getElementById('book-item').value = row.dataset.item;
   document.getElementById('book-batch').value = row.dataset.batch;
   document.getElementById('book-qty').value = row.dataset.qty;
   document.getElementById('book-desc').value = row.dataset.desc;
-  document.getElementById('book-type').value = 'Raw';
 }
 
 async function handleBookIn(e) {
@@ -844,7 +1381,12 @@ async function handleBookIn(e) {
   if (res.ok) {
     closeModal('modal-booking');
     showToast(`Booked into ${currentCellCode}`);
-    await loadGrid();
+    const activePage = document.querySelector('.page.active');
+    if (activePage && activePage.id === 'page-input') {
+      await loadInputGrid();
+    } else {
+      await loadGrid();
+    }
   } else {
     showToast(res.error, 'error');
   }
@@ -854,33 +1396,31 @@ async function handleBookIn(e) {
 // ── Users ──
 async function loadUsers() {
   const users = await api('get_all_users');
-  const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = users.map(u => `
-    <tr class="hover:bg-surface-container-low transition-colors">
-      <td class="p-md">
-        <div class="flex items-center gap-md">
-          <div class="w-10 h-10 rounded-full bg-surface-dim flex items-center justify-center text-primary font-bold">${u.username.substring(0,2).toUpperCase()}</div>
-          <p class="font-bold text-primary">${u.username}</p>
+  document.getElementById('users-tbody').innerHTML = users.map(u => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${avatar(u.username, 28, 10)}
+          <span style="font-weight:500;">${u.username}</span>
         </div>
       </td>
-      <td class="p-md">
-        <select class="bg-surface border-outline rounded text-sm focus:ring-secondary focus:border-secondary py-1" onchange="updateUserRole(${u.id}, this.value)">
-          <option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option>
-          <option value="Logistics" ${u.role==='Logistics'?'selected':''}>Logistics</option>
-          <option value="Consumer" ${u.role==='Consumer'?'selected':''}>Consumer</option>
+      <td>
+        <select style="height:30px;font-size:12px;width:auto;" onchange="updateUserRole(${u.id}, this.value)">
+          ${roleOptions(u.role)}
         </select>
       </td>
-      <td class="p-md text-right">
-        <button class="material-symbols-outlined text-outline hover:text-error" onclick="deleteUser(${u.id}, '${u.username}')">delete</button>
+      <td style="text-align:right;">
+        <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id}, '${u.username}')">
+          <i class="ti ti-trash"></i> Delete
+        </button>
       </td>
-    </tr>
-  `).join('');
+    </tr>`).join('');
 }
 
 function showAddUserForm() {
   document.getElementById('new-username').value = '';
   document.getElementById('new-password').value = '';
-  document.getElementById('add-user-error').classList.add('hidden');
+  document.getElementById('add-user-error').style.display = 'none';
   document.getElementById('modal-add-user').classList.remove('hidden');
   document.getElementById('new-username').focus();
 }
@@ -899,7 +1439,7 @@ async function handleAddUser(e) {
   } else {
     const el = document.getElementById('add-user-error');
     el.textContent = res.error;
-    el.classList.remove('hidden');
+    el.style.display = 'block';
   }
   return false;
 }
@@ -910,7 +1450,7 @@ async function updateUserRole(userId, role) {
 }
 
 async function deleteUser(userId, username) {
-  if (username === session.username) { showToast('Cannot delete yourself', 'error'); return; }
+  if (username === session.username) { showToast('Cannot delete your own account', 'error'); return; }
   await api('delete_user', userId);
   showToast('User deleted');
   loadUsers();
@@ -921,57 +1461,215 @@ async function doSearch() {
   const q = document.getElementById('global-search').value.trim();
   if (!q) return;
   const results = await api('search', q);
-  showPage('search');
-  const container = document.getElementById('search-results');
-  const countEl = document.getElementById('search-count');
-  countEl.textContent = `${results.length} result(s) for "${q}"`;
+  document.getElementById('search-count').textContent = `${results.length} result(s) for "${q}"`;
 
+  const container = document.getElementById('search-results');
   if (results.length === 0) {
-    container.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-xl opacity-60">
-        <span class="material-symbols-outlined text-[64px] mb-md text-outline">search_off</span>
-        <p class="font-title-lg text-title-lg text-primary">No results found</p>
-        <p class="text-on-surface-variant mt-xs">Try a different location code, item number, or PO#</p>
-      </div>`;
+    container.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--text-3);">
+      <i class="ti ti-search-off" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+      <div style="font-size:15px;font-weight:500;margin-bottom:4px;">No results found</div>
+      <div style="font-size:13px;">Try a location code, item number, or PO#</div>
+    </div>`;
     return;
   }
 
-  container.innerHTML = `
-    <table class="w-full border-collapse">
-      <thead class="sticky top-0 z-10">
-        <tr class="bg-surface-container-high text-left">
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant rounded-tl-lg">Location</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Item</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">PO#</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Type</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Description</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant text-right">Qty</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant">Booked By</th>
-          <th class="px-md py-sm font-label-md text-label-md text-on-surface-variant rounded-tr-lg">Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${results.map(b => `
-        <tr class="border-b border-outline-variant/40 hover:bg-surface-container-low cursor-pointer transition-colors"
-            onclick="cellClick('${b.location_code}', true)">
-          <td class="px-md py-sm">
-            <span class="inline-flex items-center gap-xs px-sm py-1 bg-primary/10 text-primary rounded font-code-md text-code-md">
-              <span class="material-symbols-outlined text-[16px]">location_on</span>${b.location_code}
-            </span>
-          </td>
-          <td class="px-md py-sm font-label-md text-label-md text-on-surface">${b.item_number || '—'}</td>
-          <td class="px-md py-sm text-on-surface-variant">${b.batch_number || '—'}</td>
-          <td class="px-md py-sm">
-            <span class="px-sm py-1 rounded-full text-xs font-semibold ${b.item_type === 'Raw' ? 'bg-tertiary-fixed text-on-tertiary-fixed' : 'bg-secondary-fixed text-on-secondary-fixed'}">${b.item_type || '—'}</span>
-          </td>
-          <td class="px-md py-sm text-on-surface-variant text-sm max-w-[200px] truncate">${b.description || '—'}</td>
-          <td class="px-md py-sm text-right font-label-md text-label-md text-on-surface">${b.qty}</td>
-          <td class="px-md py-sm text-on-surface-variant text-sm">${b.booked_by || '—'}</td>
-          <td class="px-md py-sm text-on-surface-variant text-xs">${b.booked_at ? b.booked_at.substring(0, 10) : '—'}</td>
-        </tr>
-        `).join('')}
-      </tbody>
-    </table>`;
+  container.innerHTML = `<table class="data-table">
+    <thead><tr>
+      <th>Location</th><th>Item</th><th>PO#</th><th>Type</th><th>Description</th><th>Qty</th><th>Booked by</th><th>Date</th>
+    </tr></thead>
+    <tbody>
+      ${results.map(b => `
+      <tr onclick="cellClick('${b.location_code}', true)">
+        <td>${locCode(b.location_code)}</td>
+        <td style="font-weight:500;">${b.item_number||'—'}</td>
+        <td>${batchCode(b.batch_number||'—')}</td>
+        <td><span class="badge ${b.item_type==='Raw'?'badge-green':'badge-blue'}">${b.item_type||'—'}</span></td>
+        <td style="font-size:12px;color:var(--text-2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.description||'—'}</td>
+        <td style="font-weight:600;">${b.qty}</td>
+        <td style="font-size:12px;color:var(--text-2);">${b.booked_by||'—'}</td>
+        <td style="font-size:11px;color:var(--text-3);font-family:var(--mono);">${b.booked_at?b.booked_at.substring(0,10):'—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ── Input Stock (grid with booking) ──
+let inputZone = null;
+let inputShelf = null;
+
+async function loadInputStock() {
+  const cfg = await api('get_config');
+  const zones = cfg.zones;
+  if (!inputZone) inputZone = Object.keys(zones)[0];
+
+  document.getElementById('input-zone-pills').innerHTML = Object.entries(zones).map(([code, z]) =>
+    `<button class="pill${code === inputZone ? ' active' : ''}" onclick="inputZone='${code}';inputShelf=null;loadInputStock()">${z.display_name} (${code})</button>`
+  ).join('');
+
+  const shelves = Object.keys(zones[inputZone].shelves);
+  if (!inputShelf) inputShelf = shelves[0];
+
+  document.getElementById('input-shelf-tabs').innerHTML = shelves.map(s =>
+    `<button class="shelf-tab${s === inputShelf ? ' active' : ''}" onclick="inputShelf='${s}';loadInputStock()">${s}</button>`
+  ).join('');
+
+  document.getElementById('input-breadcrumb').innerHTML = `
+    <a onclick="showPage('dashboard')">Warehouse</a>
+    <i class="ti ti-chevron-right"></i>
+    <span style="color:var(--accent);font-weight:500;">Input Stock</span>
+    <i class="ti ti-chevron-right"></i>
+    <a onclick="loadInputStock()">Zone ${inputZone}</a>
+    <i class="ti ti-chevron-right"></i>
+    <span class="current">${inputShelf}</span>`;
+
+  const overview = await api('get_zones_overview');
+  const thisZone = overview.find(z => z.code === inputZone);
+  document.getElementById('input-cap-pct').textContent = thisZone ? thisZone.percent + '% capacity' : '';
+
+  await loadInputGrid();
+}
+
+async function loadInputGrid() {
+  const grid = await api('get_shelf_grid', inputZone, inputShelf);
+  const { sections, rows, occupied } = grid;
+  const container = document.getElementById('input-grid-container');
+
+  const gap = 4, rowLabelW = 28, headerH = 20;
+  let html = `<div style="display:grid;grid-template-columns:${rowLabelW}px repeat(${sections},1fr);grid-template-rows:${headerH}px repeat(${rows},1fr);gap:${gap}px;height:100%;min-height:300px;">`;
+  html += `<div></div>`;
+  for (let s = 1; s <= sections; s++) {
+    html += `<div class="grid-col-header">${String(s).padStart(2,'0')}</div>`;
+  }
+  for (let r = rows; r >= 1; r--) {
+    html += `<div class="grid-row-label">${String(r).padStart(2,'0')}</div>`;
+    for (let s = 1; s <= sections; s++) {
+      const loc = `${inputShelf}-${String(s).padStart(2,'0')}-${String(r).padStart(2,'0')}`;
+      const isOcc = occupied.includes(loc);
+      html += `<div class="grid-cell ${isOcc?'occupied':'empty'}" onclick="inputCellClick('${loc}',${isOcc})" title="${loc}">
+        <span>${String(s).padStart(2,'0')}-${String(r).padStart(2,'0')}</span>
+        ${isOcc ? '<i class="ti ti-package" style="font-size:11px;margin-top:1px;"></i>' : ''}
+      </div>`;
+    }
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ── FIFO Consume ──
+let fifoPlan = [];
+
+async function doFifoSearch() {
+  const itemNumber = document.getElementById('fifo-item').value.trim();
+  const requestedQty = parseInt(document.getElementById('fifo-qty').value) || 0;
+  if (!itemNumber) { showToast('Enter a part number', 'info'); return; }
+  if (requestedQty < 1) { showToast('Enter a valid quantity', 'info'); return; }
+
+  const stock = await api('search_fifo', itemNumber);
+  const header = document.getElementById('fifo-header');
+  const body = document.getElementById('fifo-body');
+  const footer = document.getElementById('fifo-footer');
+
+  if (!stock || stock.length === 0) {
+    header.style.display = 'none';
+    footer.style.display = 'none';
+    body.innerHTML = `<div style="padding:60px 0;text-align:center;color:var(--text-3);">
+      <i class="ti ti-package-off" style="font-size:48px;display:block;margin-bottom:10px;"></i>
+      <div style="font-size:15px;font-weight:500;margin-bottom:4px;">No stock found</div>
+      <div style="font-size:13px;">No active bookings for <strong>${itemNumber}</strong></div>
+    </div>`;
+    return;
+  }
+
+  const totalAvailable = stock.reduce((sum, b) => sum + b.qty, 0);
+  const canFulfill = totalAvailable >= requestedQty;
+
+  fifoPlan = [];
+  let remaining = requestedQty;
+  for (const b of stock) {
+    if (remaining <= 0) break;
+    const take = Math.min(remaining, b.qty);
+    fifoPlan.push({ booking_id: b.id, qty: take, location: b.location_code, item: b.item_number, available: b.qty, batch: b.batch_number, date: b.booked_at });
+    remaining -= take;
+  }
+
+  header.style.display = 'flex';
+  document.getElementById('fifo-title').textContent = `FIFO plan for ${itemNumber}`;
+  document.getElementById('fifo-summary').innerHTML = canFulfill
+    ? `<i class="ti ti-check" style="font-size:14px;"></i> ${requestedQty} of ${totalAvailable} available`
+    : `<i class="ti ti-alert-triangle" style="font-size:14px;"></i> Only ${totalAvailable} available (need ${requestedQty})`;
+  document.getElementById('fifo-summary').className = canFulfill ? 'badge badge-green' : 'badge badge-amber';
+
+  let tableHtml = `<table class="data-table">
+    <thead><tr>
+      <th style="width:40px;">#</th>
+      <th>Location</th>
+      <th>PO#</th>
+      <th>Date booked</th>
+      <th style="text-align:right;">Available</th>
+      <th style="text-align:right;">Take</th>
+    </tr></thead><tbody>`;
+
+  let planIdx = 0;
+  stock.forEach((b, i) => {
+    const planned = fifoPlan.find(p => p.booking_id === b.id);
+    const isTake = !!planned;
+    tableHtml += `<tr class="fifo-row ${isTake ? 'take' : 'skip'}">
+      <td style="font-size:12px;color:var(--text-3);">${i + 1}</td>
+      <td>${locCode(b.location_code)}</td>
+      <td>${batchCode(b.batch_number)}</td>
+      <td style="font-size:12px;color:var(--text-3);font-family:var(--mono);">${b.booked_at ? b.booked_at.substring(0,10) : '—'}</td>
+      <td style="text-align:right;font-weight:600;">${b.qty}</td>
+      <td style="text-align:right;">
+        ${isTake ? `<span class="fifo-take-badge"><i class="ti ti-arrow-bar-to-down" style="font-size:13px;"></i> ${planned.qty}</span>` : '<span style="color:var(--text-3);font-size:12px;">—</span>'}
+      </td>
+    </tr>`;
+  });
+  tableHtml += '</tbody></table>';
+  body.innerHTML = tableHtml;
+
+  footer.style.cssText = 'display:flex;padding:12px 16px;border-top:1px solid var(--border);gap:8px;justify-content:flex-end;align-items:center;';
+  if (canFulfill) {
+    footer.innerHTML = `
+      <span style="flex:1;font-size:13px;color:var(--text-2);">
+        Consuming <strong>${requestedQty}</strong> units from <strong>${fifoPlan.length}</strong> location(s)
+      </span>
+      <button class="btn btn-ghost" onclick="clearFifo()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmFifoConsume()">
+        <i class="ti ti-check"></i> Confirm consumption
+      </button>`;
+  } else {
+    footer.innerHTML = `
+      <span style="flex:1;font-size:13px;color:var(--warn);">
+        <i class="ti ti-alert-triangle" style="font-size:14px;vertical-align:-2px;"></i>
+        Insufficient stock — only ${totalAvailable} available, need ${requestedQty}
+      </span>
+      <button class="btn btn-ghost" onclick="clearFifo()">Clear</button>`;
+  }
+}
+
+async function confirmFifoConsume() {
+  if (fifoPlan.length === 0) return;
+  const res = await api('consume_fifo', fifoPlan.map(p => ({ booking_id: p.booking_id, qty: p.qty })));
+  if (res.ok) {
+    const totalConsumed = fifoPlan.reduce((s, p) => s + p.qty, 0);
+    showToast(`Consumed ${totalConsumed} units from ${fifoPlan.length} location(s)`);
+    clearFifo();
+  } else {
+    showToast(res.error || 'Consumption failed', 'error');
+  }
+}
+
+function clearFifo() {
+  fifoPlan = [];
+  document.getElementById('fifo-header').style.display = 'none';
+  document.getElementById('fifo-footer').style.cssText = 'display:none;padding:12px 16px;border-top:1px solid var(--border);gap:8px;justify-content:flex-end;align-items:center;';
+  document.getElementById('fifo-body').innerHTML = `<div style="padding:60px 0;text-align:center;color:var(--text-3);">
+    <i class="ti ti-arrow-bar-to-down" style="font-size:48px;display:block;margin-bottom:10px;"></i>
+    <div style="font-size:15px;font-weight:500;margin-bottom:4px;">FIFO consumption</div>
+    <div style="font-size:13px;">Search for a part number to see stock locations sorted oldest-first</div>
+  </div>`;
+  document.getElementById('fifo-item').value = '';
+  document.getElementById('fifo-qty').value = 1;
 }
 
 // ── Utilities ──
@@ -979,18 +1677,17 @@ function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
 }
 
+let toastTimer;
 function showToast(msg, type = 'success') {
-  const toast = document.getElementById('toast');
+  const t = document.getElementById('toast');
+  t.className = type === 'error' ? 'error' : type === 'info' ? 'info' : '';
+  document.getElementById('toast-icon').className = 'ti ' + (type === 'error' ? 'ti-alert-circle' : type === 'info' ? 'ti-info-circle' : 'ti-check');
   document.getElementById('toast-msg').textContent = msg;
-  document.getElementById('toast-icon').textContent = type === 'error' ? 'error' : type === 'info' ? 'info' : 'check_circle';
-  toast.classList.remove('hidden');
-  setTimeout(() => toast.classList.add('hidden'), 2500);
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
 }
 
-// ── Init: wait for pywebview API ──
-window.addEventListener('pywebviewready', function() {
-  // API is ready
-});
+window.addEventListener('pywebviewready', () => {});
 </script>
 </body>
 </html>
