@@ -22,6 +22,7 @@ import com.wms.gridlocator.i18n.Strings
 import com.wms.gridlocator.ui.screens.*
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.AppTab
+import com.wms.gridlocator.viewmodel.InputStockMode
 import com.wms.gridlocator.viewmodel.WmsViewModel
 
 class MainActivity : ComponentActivity() {
@@ -127,7 +128,31 @@ fun WmsApp(viewModel: WmsViewModel = viewModel()) {
                         ConsumeStockScreen(viewModel)
                     }
                     else -> {
-                        if (state.selectedZone == null) {
+                        // Input Stock mode selector
+                        if (state.currentTab == AppTab.INPUT_STOCK) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Surface)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                InputStockModeButton(
+                                    label = strings.newBooking,
+                                    isActive = state.inputStockMode == InputStockMode.NEW_BOOKING
+                                ) { viewModel.setInputStockMode(InputStockMode.NEW_BOOKING) }
+                                InputStockModeButton(
+                                    label = strings.relocateStock,
+                                    isActive = state.inputStockMode == InputStockMode.RELOCATE
+                                ) { viewModel.setInputStockMode(InputStockMode.RELOCATE) }
+                            }
+                            HorizontalDivider(color = Border.copy(alpha = 0.3f))
+                        }
+
+                        if (state.currentTab == AppTab.INPUT_STOCK && state.inputStockMode == InputStockMode.RELOCATE) {
+                            RelocateScreen(viewModel)
+                        } else if (state.selectedZone == null) {
                             ZoneSelectorScreen(viewModel)
                         } else {
                             Row(
@@ -181,6 +206,23 @@ private fun TabButton(label: String, isActive: Boolean, onClick: () -> Unit) {
         modifier = Modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(10.dp),
         color = if (isActive) Accent else SurfaceContainer
+    ) {
+        Text(
+            label,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (isActive) SurfaceWhite else TextSecondary
+        )
+    }
+}
+
+@Composable
+private fun InputStockModeButton(label: String, isActive: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(10.dp),
+        color = if (isActive) Header else SurfaceContainer
     ) {
         Text(
             label,

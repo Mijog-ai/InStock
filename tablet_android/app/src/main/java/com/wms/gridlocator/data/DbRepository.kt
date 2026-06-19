@@ -205,6 +205,240 @@ object DbRepository {
         }
     }
 
+    // ── Relocation ──
+
+    fun searchStock(itemNumber: String): List<Booking> {
+        return SqlClient.withWms { conn ->
+            conn.prepareStatement(
+                """SELECT * FROM dbo.rohteillager
+                   WHERE RTRIM(Artikelnummer) LIKE ? AND CAST(RTRIM(Menge) AS INT) > 0
+                   ORDER BY Lagerort ASC, Datum ASC, Rownumber ASC"""
+            ).use { ps ->
+                ps.setString(1, "%$itemNumber%")
+                ps.executeQuery().use { rs ->
+                    val results = mutableListOf<Booking>()
+                    while (rs.next()) results.add(rowToBooking(rs))
+                    results
+                }
+            }
+        }
+    }
+
+    fun relocate(sourceBookingId: Int, destLocationCode: String, qty: Int, user: String): String {
+        return SqlClient.withWms { conn ->
+            val source = conn.prepareStatement(
+                "SELECT * FROM dbo.rohteillager WHERE Rownumber = ?"
+            ).use { ps ->
+                ps.setInt(1, sourceBookingId)
+                ps.executeQuery().use { rs ->
+                    if (rs.next()) rowToBooking(rs) else throw IllegalStateException("Source booking not found")
+                }
+            }
+
+            val actualQty = minOf(qty, source.qty)
+            val newSourceQty = source.qty - actualQty
+
+            if (newSourceQty <= 0) {
+                conn.prepareStatement("DELETE FROM dbo.rohteillager WHERE Rownumber = ?").use { ps ->
+                    ps.setInt(1, sourceBookingId)
+                    ps.executeUpdate()
+                }
+            } else {
+                conn.prepareStatement("UPDATE dbo.rohteillager SET Menge = ? WHERE Rownumber = ?").use { ps ->
+                    ps.setString(1, newSourceQty.toString())
+                    ps.setInt(2, sourceBookingId)
+                    ps.executeUpdate()
+                }
+            }
+
+            val bookingId: String
+            conn.prepareStatement(
+                """INSERT INTO dbo.rohteillager
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?)""",
+                Statement.RETURN_GENERATED_KEYS
+            ).use { ps ->
+                ps.setString(1, source.itemNumber.take(20))
+                ps.setString(2, source.description.take(40))
+                ps.setString(3, destLocationCode.take(20))
+                ps.setString(4, actualQty.toString().take(10))
+                ps.setString(5, source.itemType.take(20))
+                ps.setString(6, source.batchNumber.take(20))
+                ps.setString(7, user.take(20))
+                ps.executeUpdate()
+                bookingId = ps.generatedKeys.use { keys ->
+                    if (keys.next()) keys.getInt(1).toString() else "0"
+                }
+            }
+
+            conn.prepareStatement(
+                """INSERT INTO dbo.journal
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)"""
+            ).use { ps ->
+                ps.setString(1, source.itemNumber.take(20))
+                ps.setString(2, source.description.take(40))
+                ps.setString(3, source.locationCode.take(20))
+                ps.setString(4, actualQty.toString().take(10))
+                ps.setString(5, source.itemType.take(20))
+                ps.setString(6, source.batchNumber.take(20))
+                ps.setString(7, user.take(20))
+                ps.setString(8, "Uml. aus -$actualQty".take(20))
+                ps.executeUpdate()
+            }
+
+            conn.prepareStatement(
+                """INSERT INTO dbo.journal
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)"""
+            ).use { ps ->
+                ps.setString(1, source.itemNumber.take(20))
+                ps.setString(2, source.description.take(40))
+                ps.setString(3, destLocationCode.take(20))
+                ps.setString(4, actualQty.toString().take(10))
+                ps.setString(5, source.itemType.take(20))
+                ps.setString(6, source.batchNumber.take(20))
+                ps.setString(7, user.take(20))
+                ps.setString(8, "Uml. ein +$actualQty".take(20))
+                ps.executeUpdate()
+            }
+
+            bookingId
+        }
+    }
+
+    // ── Relocation revert ──
+
+    fun getRecentRelocations(): List<RecentRelocation> {
+        return SqlClient.withWms { conn ->
+            conn.prepareStatement(
+                """SELECT j_in.Artikelnummer, j_in.Bezeichnung, j_in.Lagerort AS dest,
+                          j_out.Lagerort AS src, j_in.Menge, j_in.Zusatz1, j_in.Datum,
+                          r.Rownumber AS destRowNum
+                   FROM dbo.journal j_in
+                   INNER JOIN dbo.journal j_out
+                       ON j_out.Artikelnummer = j_in.Artikelnummer
+                       AND j_out.Menge = j_in.Menge
+                       AND j_out.Datum = j_in.Datum
+                       AND j_out.Zusatz1 = j_in.Zusatz1
+                       AND RTRIM(j_out.Bemerkung) LIKE 'Uml. aus%'
+                       AND RTRIM(j_in.Bemerkung) LIKE 'Uml. ein%'
+                   INNER JOIN dbo.rohteillager r
+                       ON RTRIM(r.Artikelnummer) = RTRIM(j_in.Artikelnummer)
+                       AND RTRIM(r.Lagerort) = RTRIM(j_in.Lagerort)
+                       AND CAST(RTRIM(r.Menge) AS INT) > 0
+                   WHERE RTRIM(j_in.Bemerkung) LIKE 'Uml. ein%'
+                   ORDER BY j_in.Datum DESC"""
+            ).use { ps ->
+                ps.executeQuery().use { rs ->
+                    val results = mutableListOf<RecentRelocation>()
+                    val seen = mutableSetOf<Int>()
+                    while (rs.next() && results.size < 20) {
+                        val destRow = rs.getInt("destRowNum")
+                        if (seen.add(destRow)) {
+                            results.add(
+                                RecentRelocation(
+                                    destBookingId = destRow.toString(),
+                                    itemNumber = rs.getString("Artikelnummer")?.trim() ?: "",
+                                    description = rs.getString("Bezeichnung")?.trim() ?: "",
+                                    fromLocation = rs.getString("src")?.trim() ?: "",
+                                    toLocation = rs.getString("dest")?.trim() ?: "",
+                                    qty = (rs.getString("Menge")?.trim() ?: "0").toIntOrNull() ?: 0,
+                                    movedBy = rs.getString("Zusatz1")?.trim() ?: "",
+                                    movedAt = rs.getTimestamp("Datum")?.toString() ?: ""
+                                )
+                            )
+                        }
+                    }
+                    results
+                }
+            }
+        }
+    }
+
+    fun revertRelocation(destBookingId: Int, originalSourceLocation: String, qty: Int, user: String): String {
+        return SqlClient.withWms { conn ->
+            val dest = conn.prepareStatement(
+                "SELECT * FROM dbo.rohteillager WHERE Rownumber = ?"
+            ).use { ps ->
+                ps.setInt(1, destBookingId)
+                ps.executeQuery().use { rs ->
+                    if (rs.next()) rowToBooking(rs) else throw IllegalStateException("Destination booking not found")
+                }
+            }
+
+            val actualQty = minOf(qty, dest.qty)
+            val newDestQty = dest.qty - actualQty
+
+            if (newDestQty <= 0) {
+                conn.prepareStatement("DELETE FROM dbo.rohteillager WHERE Rownumber = ?").use { ps ->
+                    ps.setInt(1, destBookingId)
+                    ps.executeUpdate()
+                }
+            } else {
+                conn.prepareStatement("UPDATE dbo.rohteillager SET Menge = ? WHERE Rownumber = ?").use { ps ->
+                    ps.setString(1, newDestQty.toString())
+                    ps.setInt(2, destBookingId)
+                    ps.executeUpdate()
+                }
+            }
+
+            val bookingId: String
+            conn.prepareStatement(
+                """INSERT INTO dbo.rohteillager
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?)""",
+                Statement.RETURN_GENERATED_KEYS
+            ).use { ps ->
+                ps.setString(1, dest.itemNumber.take(20))
+                ps.setString(2, dest.description.take(40))
+                ps.setString(3, originalSourceLocation.take(20))
+                ps.setString(4, actualQty.toString().take(10))
+                ps.setString(5, dest.itemType.take(20))
+                ps.setString(6, dest.batchNumber.take(20))
+                ps.setString(7, user.take(20))
+                ps.executeUpdate()
+                bookingId = ps.generatedKeys.use { keys ->
+                    if (keys.next()) keys.getInt(1).toString() else "0"
+                }
+            }
+
+            conn.prepareStatement(
+                """INSERT INTO dbo.journal
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)"""
+            ).use { ps ->
+                ps.setString(1, dest.itemNumber.take(20))
+                ps.setString(2, dest.description.take(40))
+                ps.setString(3, dest.locationCode.take(20))
+                ps.setString(4, actualQty.toString().take(10))
+                ps.setString(5, dest.itemType.take(20))
+                ps.setString(6, dest.batchNumber.take(20))
+                ps.setString(7, user.take(20))
+                ps.setString(8, "Storno Uml. -$actualQty".take(20))
+                ps.executeUpdate()
+            }
+
+            conn.prepareStatement(
+                """INSERT INTO dbo.journal
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)"""
+            ).use { ps ->
+                ps.setString(1, dest.itemNumber.take(20))
+                ps.setString(2, dest.description.take(40))
+                ps.setString(3, originalSourceLocation.take(20))
+                ps.setString(4, actualQty.toString().take(10))
+                ps.setString(5, dest.itemType.take(20))
+                ps.setString(6, dest.batchNumber.take(20))
+                ps.setString(7, user.take(20))
+                ps.setString(8, "Storno Uml. +$actualQty".take(20))
+                ps.executeUpdate()
+            }
+
+            bookingId
+        }
+    }
+
     // ── FIFO lookup ──
 
     fun searchFifo(itemNumber: String): List<Booking> {
@@ -255,6 +489,24 @@ object DbRepository {
                     val cells = mutableListOf<String>()
                     while (rs.next()) cells.add(rs.getString(1).trim())
                     cells
+                }
+            }
+        }
+    }
+
+    fun getCellSlotCounts(shelfCode: String): Map<String, Int> {
+        return SqlClient.withWms { conn ->
+            conn.prepareStatement(
+                """SELECT RTRIM(Lagerort) AS loc, COUNT(*) AS cnt
+                   FROM dbo.rohteillager
+                   WHERE RTRIM(Lagerort) LIKE ? AND CAST(RTRIM(Menge) AS INT) > 0
+                   GROUP BY RTRIM(Lagerort)"""
+            ).use { ps ->
+                ps.setString(1, "$shelfCode-%")
+                ps.executeQuery().use { rs ->
+                    val map = mutableMapOf<String, Int>()
+                    while (rs.next()) map[rs.getString("loc").trim()] = rs.getInt("cnt")
+                    map
                 }
             }
         }

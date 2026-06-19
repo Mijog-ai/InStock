@@ -39,6 +39,17 @@ data class FifoPlanItem(
     val bookedAt: String
 )
 
+data class RecentRelocation(
+    val destBookingId: String,
+    val itemNumber: String,
+    val description: String,
+    val fromLocation: String,
+    val toLocation: String,
+    val qty: Int,
+    val movedBy: String,
+    val movedAt: String
+)
+
 data class ErpDelivery(
     val itemNumber: String = "",
     val purchaseNumber: String = "",

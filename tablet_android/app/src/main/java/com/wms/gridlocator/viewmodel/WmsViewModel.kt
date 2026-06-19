@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 enum class AppTab { GRID_ZONES, INPUT_STOCK, CONSUME_STOCK }
+enum class InputStockMode { NEW_BOOKING, RELOCATE }
 
 private const val PREFS_NAME = "wms_session"
 private const val KEY_USERNAME = "username"
@@ -37,7 +38,8 @@ data class UiState(
     val language: Language = Language.DE,
     val fifoResults: List<Booking> = emptyList(),
     val fifoPlan: List<FifoPlanItem> = emptyList(),
-    val fifoSearched: Boolean = false
+    val fifoSearched: Boolean = false,
+    val inputStockMode: InputStockMode = InputStockMode.NEW_BOOKING
 )
 
 class WmsViewModel(application: Application) : AndroidViewModel(application) {
@@ -206,6 +208,74 @@ class WmsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    suspend fun getCellSlotCounts(shelfCode: String): Map<String, Int> {
+        return try {
+            repo.getCellSlotCounts(shelfCode)
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "getCellSlotCounts failed", e)
+            emptyMap()
+        }
+    }
+
+    suspend fun searchStockForRelocation(itemNumber: String): List<Booking> {
+        return try {
+            repo.searchStock(itemNumber)
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "searchStock failed", e)
+            emptyList()
+        }
+    }
+
+    fun relocate(sourceBookingId: String, destLocationCode: String, qty: Int) {
+        viewModelScope.launch {
+            try {
+                val response = repo.relocate(sourceBookingId, destLocationCode, qty, _state.value.username)
+                if (response.ok) {
+                    val s = Strings.get(_state.value.language)
+                    _state.value = _state.value.copy(
+                        actionMessage = "$qty x ${s.relocatedMessage}",
+                        selectedCell = null
+                    )
+                    refreshCurrentShelf()
+                } else {
+                    _state.value = _state.value.copy(actionMessage = response.error ?: "Relocation failed")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("WmsViewModel", "relocate failed", e)
+                _state.value = _state.value.copy(actionMessage = "Error: ${e.message}")
+            }
+        }
+    }
+
+    suspend fun getRecentRelocations(): List<RecentRelocation> {
+        return try {
+            repo.getRecentRelocations()
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "getRecentRelocations failed", e)
+            emptyList()
+        }
+    }
+
+    fun revertRelocation(destBookingId: String, originalSourceLocation: String, qty: Int) {
+        viewModelScope.launch {
+            try {
+                val response = repo.revertRelocation(destBookingId, originalSourceLocation, qty, _state.value.username)
+                if (response.ok) {
+                    val s = Strings.get(_state.value.language)
+                    _state.value = _state.value.copy(
+                        actionMessage = "$qty x ${s.revertedMessage}"
+                    )
+                    refreshCurrentShelf()
+                } else {
+                    _state.value = _state.value.copy(actionMessage = response.error ?: "Revert failed")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("WmsViewModel", "revertRelocation failed", e)
+                _state.value = _state.value.copy(actionMessage = "Error: ${e.message}")
+            }
+        }
+    }
+
     suspend fun getErpDeliveries(): List<ErpDelivery> {
         return try {
             repo.getErpDeliveries()
@@ -220,8 +290,13 @@ class WmsViewModel(application: Application) : AndroidViewModel(application) {
             currentTab = tab,
             selectedZone = null, selectedShelf = null, selectedCell = null,
             cellContents = emptyList(),
-            fifoResults = emptyList(), fifoPlan = emptyList(), fifoSearched = false
+            fifoResults = emptyList(), fifoPlan = emptyList(), fifoSearched = false,
+            inputStockMode = InputStockMode.NEW_BOOKING
         )
+    }
+
+    fun setInputStockMode(mode: InputStockMode) {
+        _state.value = _state.value.copy(inputStockMode = mode)
     }
 
     fun searchFifo(itemNumber: String, requestedQty: Int) {

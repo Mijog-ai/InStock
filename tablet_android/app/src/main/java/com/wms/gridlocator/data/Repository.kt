@@ -78,6 +78,47 @@ class Repository {
         }
     }
 
+    // ── Relocation ──
+
+    suspend fun searchStock(itemNumber: String): List<Booking> = withContext(Dispatchers.IO) {
+        DbRepository.searchStock(itemNumber)
+    }
+
+    suspend fun relocate(
+        sourceBookingId: String, destLocationCode: String, qty: Int, user: String
+    ): ActionResult = withContext(Dispatchers.IO) {
+        try {
+            val maxSlots = 2
+            val current = DbRepository.getActiveSlotCount(destLocationCode)
+            if (current >= maxSlots) {
+                return@withContext ActionResult(false, "Destination cell at max capacity ($maxSlots slots)")
+            }
+            val bookingId = DbRepository.relocate(sourceBookingId.toInt(), destLocationCode, qty, user)
+            ActionResult(true, bookingId = bookingId)
+        } catch (e: Throwable) {
+            ActionResult(false, error = e.message ?: "Relocation failed")
+        }
+    }
+
+    suspend fun getRecentRelocations(): List<RecentRelocation> = withContext(Dispatchers.IO) {
+        DbRepository.getRecentRelocations()
+    }
+
+    suspend fun revertRelocation(
+        destBookingId: String, originalSourceLocation: String, qty: Int, user: String
+    ): ActionResult = withContext(Dispatchers.IO) {
+        try {
+            val bookingId = DbRepository.revertRelocation(destBookingId.toInt(), originalSourceLocation, qty, user)
+            ActionResult(true, bookingId = bookingId)
+        } catch (e: Throwable) {
+            ActionResult(false, error = e.message ?: "Revert failed")
+        }
+    }
+
+    suspend fun getCellSlotCounts(shelfCode: String): Map<String, Int> = withContext(Dispatchers.IO) {
+        DbRepository.getCellSlotCounts(shelfCode)
+    }
+
     // ── FIFO consume ──
 
     suspend fun searchFifo(itemNumber: String): List<Booking> = withContext(Dispatchers.IO) {
