@@ -100,6 +100,22 @@ class WmsApi:
             repo.consume(item["booking_id"], item["qty"], self._username)
         return {"ok": True}
 
+    def search_stock_for_relocation(self, item_number):
+        return repo.search_stock_for_relocation(item_number)
+
+    def get_cell_slot_counts(self, shelf_code):
+        return repo.get_cell_slot_counts(shelf_code)
+
+    def relocate(self, source_booking_id, dest_location_code, qty):
+        result = repo.relocate(source_booking_id, dest_location_code, qty, self._username)
+        return result
+
+    def get_recent_relocations(self):
+        return repo.get_recent_relocations()
+
+    def revert_relocation(self, dest_booking_id, original_source_location, qty):
+        return repo.revert_relocation(dest_booking_id, original_source_location, qty, self._username)
+
     def get_erp_deliveries(self):
         return erp.get_recent_deliveries()
 

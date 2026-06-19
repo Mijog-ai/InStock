@@ -371,8 +371,11 @@ object DbRepository {
             val newDestQty = dest.qty - actualQty
 
             if (newDestQty <= 0) {
-                conn.prepareStatement("DELETE FROM dbo.rohteillager WHERE Rownumber = ?").use { ps ->
-                    ps.setInt(1, destBookingId)
+                conn.prepareStatement(
+                    "UPDATE dbo.rohteillager SET Lagerort = ? WHERE Rownumber = ?"
+                ).use { ps ->
+                    ps.setString(1, originalSourceLocation.take(20))
+                    ps.setInt(2, destBookingId)
                     ps.executeUpdate()
                 }
             } else {
@@ -381,25 +384,16 @@ object DbRepository {
                     ps.setInt(2, destBookingId)
                     ps.executeUpdate()
                 }
-            }
-
-            val bookingId: String
-            conn.prepareStatement(
-                """INSERT INTO dbo.rohteillager
-                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
-                   VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?)""",
-                Statement.RETURN_GENERATED_KEYS
-            ).use { ps ->
-                ps.setString(1, dest.itemNumber.take(20))
-                ps.setString(2, dest.description.take(40))
-                ps.setString(3, originalSourceLocation.take(20))
-                ps.setString(4, actualQty.toString().take(10))
-                ps.setString(5, dest.itemType.take(20))
-                ps.setString(6, dest.batchNumber.take(20))
-                ps.setString(7, user.take(20))
-                ps.executeUpdate()
-                bookingId = ps.generatedKeys.use { keys ->
-                    if (keys.next()) keys.getInt(1).toString() else "0"
+                conn.prepareStatement(
+                    """INSERT INTO dbo.rohteillager
+                       (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+                       SELECT Artikelnummer, Bezeichnung, ?, ?, Datum, Art, Lieferschein, Zusatz1
+                       FROM dbo.rohteillager WHERE Rownumber = ?"""
+                ).use { ps ->
+                    ps.setString(1, originalSourceLocation.take(20))
+                    ps.setString(2, actualQty.toString().take(10))
+                    ps.setInt(3, destBookingId)
+                    ps.executeUpdate()
                 }
             }
 
@@ -435,7 +429,7 @@ object DbRepository {
                 ps.executeUpdate()
             }
 
-            bookingId
+            destBookingId.toString()
         }
     }
 

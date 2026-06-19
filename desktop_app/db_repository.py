@@ -279,6 +279,174 @@ def search_fifo(item_number):
         return [_row_to_booking(r, cols) for r in cur.fetchall()]
 
 
+# ── Relocate ──
+
+def search_stock_for_relocation(item_number):
+    pattern = f"%{item_number}%"
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT * FROM rohteillager
+               WHERE CAST(RTRIM(Menge) AS INT) > 0
+                 AND (RTRIM(Artikelnummer) LIKE ? OR RTRIM(Bezeichnung) LIKE ?)
+               ORDER BY Datum ASC, Rownumber ASC""",
+            pattern, pattern,
+        )
+        cols = _columns(cur)
+        return [_row_to_booking(r, cols) for r in cur.fetchall()]
+
+
+def get_cell_slot_counts(shelf_code):
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT RTRIM(Lagerort) AS loc, COUNT(*) AS cnt
+               FROM rohteillager
+               WHERE RTRIM(Lagerort) LIKE ? AND CAST(RTRIM(Menge) AS INT) > 0
+               GROUP BY RTRIM(Lagerort)""",
+            f"{shelf_code}-%",
+        )
+        return {row[0]: row[1] for row in cur.fetchall()}
+
+
+def relocate(source_booking_id, dest_location_code, qty, user):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM rohteillager WHERE Rownumber = ?", int(source_booking_id))
+        cols = _columns(cur)
+        row = cur.fetchone()
+        if row is None:
+            return {"ok": False, "error": "Source booking not found"}
+        source = _row_to_booking(row, cols)
+        actual_qty = min(qty, source["qty"])
+        new_source_qty = source["qty"] - actual_qty
+
+        if new_source_qty <= 0:
+            cur.execute("DELETE FROM rohteillager WHERE Rownumber = ?", int(source_booking_id))
+        else:
+            cur.execute("UPDATE rohteillager SET Menge = ? WHERE Rownumber = ?",
+                        str(new_source_qty), int(source_booking_id))
+
+        cur.execute(
+            """INSERT INTO rohteillager
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?)""",
+            source["item_number"][:20], source["description"][:40], dest_location_code[:20],
+            str(actual_qty)[:10], source["item_type"][:20], source["batch_number"][:20], user[:20],
+        )
+        cur.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cur.fetchone()[0]
+        booking_id = str(int(new_id)) if new_id else "0"
+
+        cur.execute(
+            """INSERT INTO journal
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)""",
+            source["item_number"][:20], source["description"][:40], source["location_code"][:20],
+            str(actual_qty)[:10], source["item_type"][:20], source["batch_number"][:20], user[:20],
+            f"Uml. aus -{actual_qty}"[:20],
+        )
+
+        cur.execute(
+            """INSERT INTO journal
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)""",
+            source["item_number"][:20], source["description"][:40], dest_location_code[:20],
+            str(actual_qty)[:10], source["item_type"][:20], source["batch_number"][:20], user[:20],
+            f"Uml. ein +{actual_qty}"[:20],
+        )
+
+        return {"ok": True, "booking_id": booking_id}
+
+
+def get_recent_relocations(limit=20):
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT j_in.Artikelnummer, j_in.Bezeichnung, j_in.Lagerort AS dest,
+                      j_out.Lagerort AS src, j_in.Menge, j_in.Zusatz1, j_in.Datum,
+                      r.Rownumber AS destRowNum
+               FROM journal j_in
+               INNER JOIN journal j_out
+                   ON j_out.Artikelnummer = j_in.Artikelnummer
+                   AND j_out.Menge = j_in.Menge
+                   AND j_out.Datum = j_in.Datum
+                   AND j_out.Zusatz1 = j_in.Zusatz1
+                   AND RTRIM(j_out.Bemerkung) LIKE 'Uml. aus%'
+                   AND RTRIM(j_in.Bemerkung) LIKE 'Uml. ein%'
+               INNER JOIN rohteillager r
+                   ON RTRIM(r.Artikelnummer) = RTRIM(j_in.Artikelnummer)
+                   AND RTRIM(r.Lagerort) = RTRIM(j_in.Lagerort)
+                   AND CAST(RTRIM(r.Menge) AS INT) > 0
+               WHERE RTRIM(j_in.Bemerkung) LIKE 'Uml. ein%'
+               ORDER BY j_in.Datum DESC"""
+        )
+        cols = _columns(cur)
+        results = []
+        seen = set()
+        for row in cur.fetchall():
+            raw = dict(zip(cols, row))
+            dest_row = raw["destRowNum"]
+            if dest_row in seen:
+                continue
+            seen.add(dest_row)
+            results.append({
+                "dest_booking_id": str(dest_row),
+                "item_number": _strip(raw["Artikelnummer"]),
+                "description": _strip(raw.get("Bezeichnung", "")),
+                "from_location": _strip(raw["src"]),
+                "to_location": _strip(raw["dest"]),
+                "qty": int(_strip(raw.get("Menge", "0")) or 0),
+                "moved_by": _strip(raw.get("Zusatz1", "")),
+                "moved_at": raw["Datum"].isoformat() if isinstance(raw.get("Datum"), (date, datetime)) else str(raw.get("Datum", "")),
+            })
+            if len(results) >= limit:
+                break
+        return results
+
+
+def revert_relocation(dest_booking_id, original_source_location, qty, user):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM rohteillager WHERE Rownumber = ?", int(dest_booking_id))
+        cols = _columns(cur)
+        row = cur.fetchone()
+        if row is None:
+            return {"ok": False, "error": "Destination booking not found"}
+        dest = _row_to_booking(row, cols)
+        actual_qty = min(qty, dest["qty"])
+        new_dest_qty = dest["qty"] - actual_qty
+
+        if new_dest_qty <= 0:
+            cur.execute("UPDATE rohteillager SET Lagerort = ? WHERE Rownumber = ?",
+                        original_source_location[:20], int(dest_booking_id))
+        else:
+            cur.execute("UPDATE rohteillager SET Menge = ? WHERE Rownumber = ?",
+                        str(new_dest_qty), int(dest_booking_id))
+            cur.execute(
+                """INSERT INTO rohteillager
+                   (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1)
+                   SELECT Artikelnummer, Bezeichnung, ?, ?, Datum, Art, Lieferschein, Zusatz1
+                   FROM rohteillager WHERE Rownumber = ?""",
+                original_source_location[:20], str(actual_qty)[:10], int(dest_booking_id),
+            )
+
+        cur.execute(
+            """INSERT INTO journal
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)""",
+            dest["item_number"][:20], dest["description"][:40], dest["location_code"][:20],
+            str(actual_qty)[:10], dest["item_type"][:20], dest["batch_number"][:20], user[:20],
+            f"Storno Uml. -{actual_qty}"[:20],
+        )
+
+        cur.execute(
+            """INSERT INTO journal
+               (Artikelnummer, Bezeichnung, Lagerort, Menge, Datum, Art, Lieferschein, Zusatz1, Bemerkung)
+               VALUES (?, ?, ?, ?, CAST(GETDATE() AS DATE), ?, ?, ?, ?)""",
+            dest["item_number"][:20], dest["description"][:40], original_source_location[:20],
+            str(actual_qty)[:10], dest["item_type"][:20], dest["batch_number"][:20], user[:20],
+            f"Storno Uml. +{actual_qty}"[:20],
+        )
+
+        return {"ok": True}
+
+
 # ── Search ──
 
 def search_bookings(query):

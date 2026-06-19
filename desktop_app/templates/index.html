@@ -507,6 +507,29 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
 /* ── Input / Consume page overflow ── */
 #page-input { overflow: hidden; }
 #page-consume { overflow: hidden; }
+#page-relocate { overflow: hidden; }
+
+/* ── Relocate page ── */
+.relocate-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; padding: 24px; gap: 16px; }
+.relocate-body { display: flex; flex: 1; min-height: 0; gap: 16px; }
+.relocate-left, .relocate-right { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 12px; }
+.reloc-source-table { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.reloc-source-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reloc-source-table th { position: sticky; top: 0; background: var(--surface-2); padding: 6px 10px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-2); border-bottom: 1px solid var(--border); }
+.reloc-source-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.reloc-source-table tr:hover td { background: var(--surface-2); }
+.reloc-source-table tr.selected td { background: var(--accent-bg); }
+.reloc-source-summary { padding: 10px 12px; border-radius: var(--radius); background: var(--accent-bg); border: 1px solid rgba(26,86,219,0.2); display: flex; gap: 20px; align-items: center; }
+.reloc-source-summary .label { font-size: 11px; color: var(--text-2); }
+.reloc-source-summary .value { font-size: 14px; font-weight: 600; }
+.reloc-source-summary .value.accent { color: var(--accent); }
+.reloc-recent-table { flex: 1; min-height: 0; overflow-y: auto; }
+.reloc-recent-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+.reloc-recent-item + .reloc-recent-item { margin-top: 6px; }
+.reloc-recent-item .info { flex: 1; }
+.reloc-recent-item .info .item-name { font-size: 13px; font-weight: 600; }
+.reloc-recent-item .info .route { font-size: 12px; font-weight: 500; color: var(--accent); }
+.reloc-recent-item .info .meta { font-size: 11px; color: var(--text-3); }
 </style>
 </head>
 <body>
@@ -576,6 +599,9 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
         </a>
         <a class="nav-item" id="nav-consume" onclick="showPage('consume')">
           <i class="ti ti-package-export"></i> Consume Stock
+        </a>
+        <a class="nav-item" id="nav-relocate" onclick="showPage('relocate')">
+          <i class="ti ti-transfer"></i> Relocate
         </a>
         <a class="nav-item hidden" id="nav-users" onclick="showPage('users')">
           <i class="ti ti-users"></i> Users
@@ -801,6 +827,91 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
             </div>
             <div id="fifo-footer" style="display:none;padding:12px 16px;border-top:1px solid var(--border);gap:8px;justify-content:flex-end;align-items:center;">
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RELOCATE ── -->
+      <div id="page-relocate" class="page">
+        <div class="relocate-wrap">
+          <div>
+            <h1 class="page-title">Relocate Stock</h1>
+            <p class="page-subtitle">Move stock from one cell to another. Search for an item, pick a destination, and confirm.</p>
+          </div>
+          <div class="relocate-body">
+
+            <!-- Left: Source -->
+            <div class="relocate-left">
+              <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+                <div class="card-header"><h2>Step 1 — Source stock</h2></div>
+                <div style="padding:12px 16px 0 16px;">
+                  <div style="display:flex;gap:8px;align-items:flex-end;">
+                    <div class="form-group" style="flex:1;">
+                      <label for="reloc-search">Item number / description</label>
+                      <input type="text" id="reloc-search" placeholder="e.g. SKU-9921-X" onkeydown="if(event.key==='Enter')doRelocSearch()"/>
+                    </div>
+                    <button class="btn btn-primary" onclick="doRelocSearch()" style="height:36px;">
+                      <i class="ti ti-search"></i> Search
+                    </button>
+                  </div>
+                </div>
+                <div class="reloc-source-table" id="reloc-source-table" style="margin:12px 16px;">
+                  <div style="padding:40px 0;text-align:center;color:var(--text-3);">
+                    <i class="ti ti-package-import" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+                    <div style="font-size:13px;">Search for a part number to find stock to relocate</div>
+                  </div>
+                </div>
+                <div id="reloc-source-summary" style="display:none;padding:0 16px 12px 16px;">
+                  <div class="reloc-source-summary">
+                    <div><div class="label">From location</div><div class="value accent" id="reloc-from-loc">—</div></div>
+                    <div><div class="label">Item</div><div class="value" id="reloc-from-item">—</div></div>
+                    <div><div class="label">Available qty</div><div class="value" id="reloc-from-qty">—</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Destination + Recent -->
+            <div class="relocate-right">
+              <div class="card">
+                <div class="card-header"><h2>Step 2 — Destination</h2></div>
+                <div style="padding:12px 16px 16px 16px;display:flex;flex-direction:column;gap:10px;">
+                  <div style="display:flex;gap:8px;">
+                    <div class="form-group" style="flex:1;">
+                      <label for="reloc-zone">Zone</label>
+                      <select id="reloc-zone" onchange="onRelocZoneChange()"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                      <label for="reloc-shelf">Shelf</label>
+                      <select id="reloc-shelf" onchange="onRelocShelfChange()"></select>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;">
+                    <div class="form-group" style="flex:1;">
+                      <label for="reloc-cell">Destination cell</label>
+                      <select id="reloc-cell"><option value="">— select shelf first —</option></select>
+                      <div style="font-size:11px;color:var(--text-3);margin-top:2px;" id="reloc-cell-count"></div>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                      <label for="reloc-qty">Qty to relocate</label>
+                      <input type="number" id="reloc-qty" min="1" value="1" style="text-align:center;font-weight:600;font-family:var(--mono);"/>
+                    </div>
+                  </div>
+                  <div id="reloc-error" style="display:none;color:var(--danger);font-size:13px;"></div>
+                  <button class="btn btn-primary" onclick="doRelocConfirm()" style="width:100%;height:40px;font-size:14px;">
+                    <i class="ti ti-transfer"></i> Confirm relocation
+                  </button>
+                </div>
+              </div>
+
+              <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+                <div class="card-header"><h2>Recent relocations</h2></div>
+                <div class="reloc-recent-table" id="reloc-recent-body" style="padding:10px 16px;">
+                  <div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">Loading…</div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -1047,6 +1158,7 @@ function showPage(name) {
   else if (name === 'zones') loadZones();
   else if (name === 'input') loadInputStock();
   else if (name === 'users') loadUsers();
+  else if (name === 'relocate') loadRelocatePage();
 }
 
 // ── Dashboard ──
@@ -1675,6 +1787,186 @@ function clearFifo() {
 // ── Utilities ──
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
+}
+
+// ══════════════════════════════
+// RELOCATE
+// ══════════════════════════════
+
+let relocConfig = null;
+let relocSelectedSource = null;
+
+async function loadRelocatePage() {
+  if (!relocConfig) relocConfig = await api('get_config');
+  const zoneKeys = Object.keys(relocConfig.zones).sort();
+  const zoneSel = document.getElementById('reloc-zone');
+  zoneSel.innerHTML = zoneKeys.map(z =>
+    `<option value="${z}">${relocConfig.zones[z].display_name} (${z})</option>`
+  ).join('');
+  onRelocZoneChange();
+  loadRelocRecent();
+}
+
+function onRelocZoneChange() {
+  const zone = document.getElementById('reloc-zone').value;
+  const shelves = relocConfig.zones[zone]?.shelves || {};
+  const shelfKeys = Object.keys(shelves).sort();
+  const shelfSel = document.getElementById('reloc-shelf');
+  shelfSel.innerHTML = shelfKeys.map(s => `<option value="${s}">${s}</option>`).join('');
+  onRelocShelfChange();
+}
+
+async function onRelocShelfChange() {
+  const zone = document.getElementById('reloc-zone').value;
+  const shelf = document.getElementById('reloc-shelf').value;
+  const cellSel = document.getElementById('reloc-cell');
+  const countEl = document.getElementById('reloc-cell-count');
+  if (!shelf) {
+    cellSel.innerHTML = '<option value="">— select shelf first —</option>';
+    countEl.textContent = '';
+    return;
+  }
+  cellSel.innerHTML = '<option value="">Loading…</option>';
+  const shelfCfg = relocConfig.zones[zone]?.shelves?.[shelf];
+  if (!shelfCfg) return;
+  const slotCounts = await api('get_cell_slot_counts', shelf);
+  const cells = [];
+  for (let sec = 1; sec <= shelfCfg.sections; sec++) {
+    for (let row = 1; row <= shelfCfg.rows; row++) {
+      const code = `${shelf}-${String(sec).padStart(2,'0')}-${String(row).padStart(2,'0')}`;
+      const used = slotCounts[code] || 0;
+      if (used === 0) cells.push(code);
+    }
+  }
+  if (cells.length === 0) {
+    cellSel.innerHTML = '<option value="">No empty cells available</option>';
+  } else {
+    cellSel.innerHTML = '<option value="">— select cell —</option>' +
+      cells.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+  countEl.textContent = `${cells.length} empty cell(s) available`;
+}
+
+async function doRelocSearch() {
+  const query = document.getElementById('reloc-search').value.trim();
+  if (!query) return;
+  relocSelectedSource = null;
+  document.getElementById('reloc-source-summary').style.display = 'none';
+  const tableEl = document.getElementById('reloc-source-table');
+  tableEl.innerHTML = '<div style="padding:30px 0;text-align:center;color:var(--text-3);"><i class="ti ti-loader" style="font-size:24px;"></i> Searching…</div>';
+  const results = await api('search_stock_for_relocation', query);
+  if (results.length === 0) {
+    tableEl.innerHTML = `<div style="padding:30px 0;text-align:center;">
+      <div style="color:var(--danger);font-weight:600;">No stock found</div>
+      <div style="color:var(--text-3);font-size:13px;">No active bookings for "${query}"</div>
+    </div>`;
+    return;
+  }
+  tableEl.innerHTML = `<table>
+    <thead><tr><th>Location</th><th>Item</th><th>Batch/PO</th><th>Qty</th><th>Date</th></tr></thead>
+    <tbody>${results.map((b, i) => `
+      <tr onclick="selectRelocSource(${i})" data-idx="${i}" id="reloc-row-${i}">
+        <td style="font-family:var(--mono);font-weight:600;color:var(--accent);">${b.location_code}</td>
+        <td style="font-weight:500;">${b.item_number}</td>
+        <td style="color:var(--text-2);">${b.batch_number}</td>
+        <td style="font-weight:600;font-family:var(--mono);">${b.qty}</td>
+        <td style="color:var(--text-2);font-size:12px;">${b.booked_at?.substring(0,10) || ''}</td>
+      </tr>
+    `).join('')}</tbody></table>`;
+  window._relocResults = results;
+}
+
+function selectRelocSource(idx) {
+  const b = window._relocResults[idx];
+  relocSelectedSource = b;
+  document.querySelectorAll('#reloc-source-table tr').forEach(r => r.classList.remove('selected'));
+  const row = document.getElementById('reloc-row-' + idx);
+  if (row) row.classList.add('selected');
+  document.getElementById('reloc-from-loc').textContent = b.location_code;
+  document.getElementById('reloc-from-item').textContent = b.item_number;
+  document.getElementById('reloc-from-qty').textContent = b.qty;
+  document.getElementById('reloc-source-summary').style.display = '';
+  document.getElementById('reloc-qty').value = b.qty;
+  document.getElementById('reloc-error').style.display = 'none';
+}
+
+async function doRelocConfirm() {
+  const errEl = document.getElementById('reloc-error');
+  if (!relocSelectedSource) {
+    errEl.textContent = 'Select a source stock item first.';
+    errEl.style.display = '';
+    return;
+  }
+  const destCell = document.getElementById('reloc-cell').value;
+  if (!destCell) {
+    errEl.textContent = 'Select a destination cell.';
+    errEl.style.display = '';
+    return;
+  }
+  const qty = parseInt(document.getElementById('reloc-qty').value) || 0;
+  if (qty <= 0) {
+    errEl.textContent = 'Quantity must be positive.';
+    errEl.style.display = '';
+    return;
+  }
+  if (qty > relocSelectedSource.qty) {
+    errEl.textContent = `Max available: ${relocSelectedSource.qty}`;
+    errEl.style.display = '';
+    return;
+  }
+  if (destCell === relocSelectedSource.location_code) {
+    errEl.textContent = 'Destination must be different from source.';
+    errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  const res = await api('relocate', relocSelectedSource.id, destCell, qty);
+  if (res.ok) {
+    showToast(`${qty} x ${relocSelectedSource.item_number} relocated to ${destCell}`);
+    relocSelectedSource = null;
+    document.getElementById('reloc-source-summary').style.display = 'none';
+    document.getElementById('reloc-source-table').innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text-3);"><i class="ti ti-package-import" style="font-size:36px;display:block;margin-bottom:8px;"></i><div style="font-size:13px;">Search for a part number to find stock to relocate</div></div>';
+    document.getElementById('reloc-search').value = '';
+    document.getElementById('reloc-qty').value = '1';
+    document.getElementById('reloc-cell').value = '';
+    onRelocShelfChange();
+    loadRelocRecent();
+  } else {
+    errEl.textContent = res.error || 'Relocation failed';
+    errEl.style.display = '';
+  }
+}
+
+async function loadRelocRecent() {
+  const body = document.getElementById('reloc-recent-body');
+  const items = await api('get_recent_relocations');
+  if (items.length === 0) {
+    body.innerHTML = '<div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">No recent relocations</div>';
+    return;
+  }
+  body.innerHTML = items.map(r => `
+    <div class="reloc-recent-item">
+      <div class="info">
+        <div class="item-name">${r.item_number}</div>
+        <div class="route">${r.from_location} → ${r.to_location}</div>
+        <div class="meta">Qty: ${r.qty} · ${r.moved_by} · ${r.moved_at?.substring(0,10) || ''}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="doRelocRevert('${r.dest_booking_id}','${r.from_location}',${r.qty},'${r.item_number}')">
+        <i class="ti ti-arrow-back-up" style="font-size:14px;"></i> Revert
+      </button>
+    </div>
+  `).join('');
+}
+
+async function doRelocRevert(destBookingId, fromLocation, qty, itemNumber) {
+  if (!confirm(`Revert relocation?\n\n${itemNumber}: move ${qty} back to ${fromLocation}`)) return;
+  const res = await api('revert_relocation', destBookingId, fromLocation, qty);
+  if (res.ok) {
+    showToast(`Relocation of ${itemNumber} reverted`);
+    loadRelocRecent();
+  } else {
+    showToast(res.error || 'Revert failed', 'error');
+  }
 }
 
 let toastTimer;
