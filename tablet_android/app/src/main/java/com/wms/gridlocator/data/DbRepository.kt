@@ -488,6 +488,48 @@ object DbRepository {
         }
     }
 
+    fun getLocationSuggestions(itemNumber: String, sourceDate: String): List<Pair<String, String>> {
+        return SqlClient.withWms { conn ->
+            conn.prepareStatement(
+                """SELECT TOP 3 RTRIM(Lagerort) AS loc, Datum
+                   FROM dbo.rohteillager
+                   WHERE RTRIM(Artikelnummer) = ?
+                     AND CAST(RTRIM(Menge) AS INT) > 0
+                   ORDER BY ABS(DATEDIFF(DAY, Datum, ?)) ASC"""
+            ).use { ps ->
+                ps.setString(1, itemNumber.trim())
+                ps.setString(2, sourceDate)
+                ps.executeQuery().use { rs ->
+                    val results = mutableListOf<Pair<String, String>>()
+                    while (rs.next()) {
+                        val loc = rs.getString("loc")?.trim() ?: ""
+                        val d = rs.getDate("Datum")
+                        val dateStr = d?.toString() ?: ""
+                        results.add(loc to dateStr)
+                    }
+                    results
+                }
+            }
+        }
+    }
+
+    fun getAllCellSlotCounts(): Map<String, Int> {
+        return SqlClient.withWms { conn ->
+            conn.prepareStatement(
+                """SELECT RTRIM(Lagerort) AS loc, COUNT(*) AS cnt
+                   FROM dbo.rohteillager
+                   WHERE CAST(RTRIM(Menge) AS INT) > 0
+                   GROUP BY RTRIM(Lagerort)"""
+            ).use { ps ->
+                ps.executeQuery().use { rs ->
+                    val map = mutableMapOf<String, Int>()
+                    while (rs.next()) map[rs.getString("loc").trim()] = rs.getInt("cnt")
+                    map
+                }
+            }
+        }
+    }
+
     fun getCellSlotCounts(shelfCode: String): Map<String, Int> {
         return SqlClient.withWms { conn ->
             conn.prepareStatement(

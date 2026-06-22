@@ -295,6 +295,35 @@ def search_stock_for_relocation(item_number):
         return [_row_to_booking(r, cols) for r in cur.fetchall()]
 
 
+def get_location_suggestions(item_number, source_date):
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT TOP 3 RTRIM(Lagerort) AS loc, Datum
+               FROM rohteillager
+               WHERE RTRIM(Artikelnummer) = ?
+                 AND CAST(RTRIM(Menge) AS INT) > 0
+               ORDER BY ABS(DATEDIFF(DAY, Datum, ?)) ASC""",
+            item_number.strip(), source_date,
+        )
+        results = []
+        for row in cur.fetchall():
+            d = row[1]
+            date_str = d.isoformat() if isinstance(d, (date, datetime)) else str(d or "")
+            results.append({"location": row[0], "date": date_str})
+        return results
+
+
+def get_all_cell_slot_counts():
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT RTRIM(Lagerort) AS loc, COUNT(*) AS cnt
+               FROM rohteillager
+               WHERE CAST(RTRIM(Menge) AS INT) > 0
+               GROUP BY RTRIM(Lagerort)"""
+        )
+        return {row[0]: row[1] for row in cur.fetchall()}
+
+
 def get_cell_slot_counts(shelf_code):
     with get_cursor() as cur:
         cur.execute(

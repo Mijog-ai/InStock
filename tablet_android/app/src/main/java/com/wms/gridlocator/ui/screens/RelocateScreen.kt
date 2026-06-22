@@ -38,21 +38,20 @@ fun RelocateScreen(viewModel: WmsViewModel) {
     var selectedSource by remember { mutableStateOf<Booking?>(null) }
 
     // Destination state
-    val zoneKeys = remember { config.zones.keys.sorted() }
-    var selectedZone by remember { mutableStateOf(zoneKeys.firstOrNull() ?: "") }
-    val shelfKeys = remember(selectedZone) { config.zones[selectedZone]?.shelves?.keys?.sorted() ?: emptyList() }
-    var selectedShelf by remember(selectedZone) { mutableStateOf(shelfKeys.firstOrNull() ?: "") }
     var availableCells by remember { mutableStateOf<List<String>>(emptyList()) }
+    var cellSlotCounts by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var loadingCells by remember { mutableStateOf(false) }
     var selectedDestCell by remember { mutableStateOf("") }
 
-    var zoneExpanded by remember { mutableStateOf(false) }
-    var shelfExpanded by remember { mutableStateOf(false) }
+    // Location suggestions based on same part number
+    var locationSuggestions by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+
     var cellExpanded by remember { mutableStateOf(false) }
 
     // Qty + validation
     var relocateQty by remember { mutableStateOf("") }
     var validationError by remember { mutableStateOf<String?>(null) }
+    var relocating by remember { mutableStateOf(false) }
 
     // Recent relocations
     var recentRelocations by remember { mutableStateOf<List<RecentRelocation>>(emptyList()) }
@@ -66,27 +65,32 @@ fun RelocateScreen(viewModel: WmsViewModel) {
         loadingRecent = false
     }
 
-    // Load available cells when shelf changes
-    LaunchedEffect(selectedShelf) {
-        if (selectedShelf.isBlank()) {
-            availableCells = emptyList()
-            return@LaunchedEffect
-        }
+    LaunchedEffect(selectedSource) {
+        locationSuggestions = if (selectedSource != null) {
+            val srcDate = selectedSource!!.bookedAt.take(10)
+            viewModel.getLocationSuggestions(selectedSource!!.itemNumber, srcDate)
+                .filter { it.first != selectedSource!!.locationCode }
+        } else emptyList()
+    }
+
+    // Load all available cells across all zones/shelves
+    LaunchedEffect(Unit) {
         loadingCells = true
-        val shelfConfig = config.zones[selectedZone]?.shelves?.get(selectedShelf)
-        if (shelfConfig != null) {
-            val slotCounts = viewModel.getCellSlotCounts(selectedShelf)
-            val cells = mutableListOf<String>()
-            for (sec in 1..shelfConfig.sections) {
-                for (row in 1..shelfConfig.rows) {
-                    val code = "$selectedShelf-${"%02d".format(sec)}-${"%02d".format(row)}"
-                    val used = slotCounts[code] ?: 0
-                    if (used == 0) cells.add(code)
+        val slotCounts = viewModel.getAllCellSlotCounts()
+        cellSlotCounts = slotCounts
+        val cells = mutableListOf<String>()
+        for ((_, zone) in config.zones.entries.sortedBy { it.key }) {
+            for ((shelfKey, shelfCfg) in zone.shelves.entries.sortedBy { it.key }) {
+                for (sec in 1..shelfCfg.sections) {
+                    for (row in 1..shelfCfg.rows) {
+                        val code = "$shelfKey-${"%02d".format(sec)}-${"%02d".format(row)}"
+                        val used = slotCounts[code] ?: 0
+                        if (used == 0) cells.add(code)
+                    }
                 }
             }
-            availableCells = cells
         }
-        selectedDestCell = ""
+        availableCells = cells
         loadingCells = false
     }
 
@@ -293,70 +297,6 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                         Text(s.step2Destination, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                         Spacer(Modifier.height(12.dp))
 
-                        // Zone + Shelf dropdowns
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            ExposedDropdownMenuBox(
-                                expanded = zoneExpanded,
-                                onExpandedChange = { zoneExpanded = !zoneExpanded },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                OutlinedTextField(
-                                    value = config.zones[selectedZone]?.displayName ?: selectedZone,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text(s.zone) },
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(zoneExpanded) },
-                                    modifier = Modifier.menuAnchor()
-                                )
-                                ExposedDropdownMenu(expanded = zoneExpanded, onDismissRequest = { zoneExpanded = false }) {
-                                    zoneKeys.forEach { z ->
-                                        DropdownMenuItem(
-                                            text = { Text("${config.zones[z]?.displayName ?: z} ($z)") },
-                                            onClick = {
-                                                selectedZone = z
-                                                zoneExpanded = false
-                                                selectedDestCell = ""
-                                                validationError = null
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-
-                            ExposedDropdownMenuBox(
-                                expanded = shelfExpanded,
-                                onExpandedChange = { shelfExpanded = !shelfExpanded },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedShelf,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text(s.selectZoneShelf) },
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(shelfExpanded) },
-                                    modifier = Modifier.menuAnchor()
-                                )
-                                ExposedDropdownMenu(expanded = shelfExpanded, onDismissRequest = { shelfExpanded = false }) {
-                                    shelfKeys.forEach { sh ->
-                                        DropdownMenuItem(
-                                            text = { Text(sh) },
-                                            onClick = {
-                                                selectedShelf = sh
-                                                shelfExpanded = false
-                                                selectedDestCell = ""
-                                                validationError = null
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
                         // Destination cell + Qty in a row
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             ExposedDropdownMenuBox(
@@ -381,13 +321,35 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                                     onDismissRequest = { cellExpanded = false },
                                     modifier = Modifier.heightIn(max = 300.dp)
                                 ) {
-                                    if (availableCells.isEmpty()) {
+                                    val suggestedCells = locationSuggestions
+                                        .filter { (cellSlotCounts[it.first] ?: 0) < maxSlots }
+                                    if (availableCells.isEmpty() && suggestedCells.isEmpty()) {
                                         DropdownMenuItem(
                                             text = { Text(s.allCellsFull, color = CellRed) },
                                             onClick = { cellExpanded = false }
                                         )
                                     } else {
-                                        availableCells.forEach { cell ->
+                                        suggestedCells.forEach { (loc, dateStr) ->
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        "★ $loc (${dateStr.take(10)})",
+                                                        color = CellGreen,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                },
+                                                onClick = {
+                                                    selectedDestCell = loc
+                                                    cellExpanded = false
+                                                    validationError = null
+                                                }
+                                            )
+                                        }
+                                        if (suggestedCells.isNotEmpty()) {
+                                            HorizontalDivider(color = Border, thickness = 1.dp)
+                                        }
+                                        val remaining = availableCells.filter { cell -> suggestedCells.none { it.first == cell } }
+                                        remaining.forEach { cell ->
                                             DropdownMenuItem(
                                                 text = { Text(cell) },
                                                 onClick = {
@@ -432,17 +394,22 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                                     selectedDestCell == src.locationCode -> validationError = s.selectDestCell
                                     else -> {
                                         validationError = null
-                                        viewModel.relocate(src.id, selectedDestCell, q)
-                                        selectedSource = null
-                                        searchResults = emptyList()
-                                        searched = false
-                                        searchQuery = ""
-                                        relocateQty = ""
-                                        selectedDestCell = ""
-                                        refreshTrigger++
+                                        relocating = true
+                                        scope.launch {
+                                            viewModel.relocate(src.id, selectedDestCell, q)
+                                            relocating = false
+                                            selectedSource = null
+                                            searchResults = emptyList()
+                                            searched = false
+                                            searchQuery = ""
+                                            relocateQty = ""
+                                            selectedDestCell = ""
+                                            refreshTrigger++
+                                        }
                                     }
                                 }
                             },
+                            enabled = !relocating,
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Accent)

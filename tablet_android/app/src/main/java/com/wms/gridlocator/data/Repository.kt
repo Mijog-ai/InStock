@@ -115,6 +115,14 @@ class Repository {
         }
     }
 
+    suspend fun getLocationSuggestions(itemNumber: String, sourceDate: String): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        DbRepository.getLocationSuggestions(itemNumber, sourceDate)
+    }
+
+    suspend fun getAllCellSlotCounts(): Map<String, Int> = withContext(Dispatchers.IO) {
+        DbRepository.getAllCellSlotCounts()
+    }
+
     suspend fun getCellSlotCounts(shelfCode: String): Map<String, Int> = withContext(Dispatchers.IO) {
         DbRepository.getCellSlotCounts(shelfCode)
     }

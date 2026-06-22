@@ -208,6 +208,24 @@ class WmsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    suspend fun getLocationSuggestions(itemNumber: String, sourceDate: String): List<Pair<String, String>> {
+        return try {
+            repo.getLocationSuggestions(itemNumber, sourceDate)
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "getLocationSuggestions failed", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getAllCellSlotCounts(): Map<String, Int> {
+        return try {
+            repo.getAllCellSlotCounts()
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "getAllCellSlotCounts failed", e)
+            emptyMap()
+        }
+    }
+
     suspend fun getCellSlotCounts(shelfCode: String): Map<String, Int> {
         return try {
             repo.getCellSlotCounts(shelfCode)
@@ -226,24 +244,22 @@ class WmsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun relocate(sourceBookingId: String, destLocationCode: String, qty: Int) {
-        viewModelScope.launch {
-            try {
-                val response = repo.relocate(sourceBookingId, destLocationCode, qty, _state.value.username)
-                if (response.ok) {
-                    val s = Strings.get(_state.value.language)
-                    _state.value = _state.value.copy(
-                        actionMessage = "$qty x ${s.relocatedMessage}",
-                        selectedCell = null
-                    )
-                    refreshCurrentShelf()
-                } else {
-                    _state.value = _state.value.copy(actionMessage = response.error ?: "Relocation failed")
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("WmsViewModel", "relocate failed", e)
-                _state.value = _state.value.copy(actionMessage = "Error: ${e.message}")
+    suspend fun relocate(sourceBookingId: String, destLocationCode: String, qty: Int) {
+        try {
+            val response = repo.relocate(sourceBookingId, destLocationCode, qty, _state.value.username)
+            if (response.ok) {
+                val s = Strings.get(_state.value.language)
+                _state.value = _state.value.copy(
+                    actionMessage = "$qty x ${s.relocatedMessage}",
+                    selectedCell = null
+                )
+                refreshCurrentShelf()
+            } else {
+                _state.value = _state.value.copy(actionMessage = response.error ?: "Relocation failed")
             }
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "relocate failed", e)
+            _state.value = _state.value.copy(actionMessage = "Error: ${e.message}")
         }
     }
 

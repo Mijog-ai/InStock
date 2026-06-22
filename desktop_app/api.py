@@ -103,8 +103,14 @@ class WmsApi:
     def search_stock_for_relocation(self, item_number):
         return repo.search_stock_for_relocation(item_number)
 
+    def get_location_suggestions(self, item_number, source_date):
+        return repo.get_location_suggestions(item_number, source_date)
+
     def get_cell_slot_counts(self, shelf_code):
         return repo.get_cell_slot_counts(shelf_code)
+
+    def get_all_cell_slot_counts(self):
+        return repo.get_all_cell_slot_counts()
 
     def relocate(self, source_booking_id, dest_location_code, qty):
         result = repo.relocate(source_booking_id, dest_location_code, qty, self._username)

@@ -878,18 +878,8 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
                 <div style="padding:12px 16px 16px 16px;display:flex;flex-direction:column;gap:10px;">
                   <div style="display:flex;gap:8px;">
                     <div class="form-group" style="flex:1;">
-                      <label for="reloc-zone">Zone</label>
-                      <select id="reloc-zone" onchange="onRelocZoneChange()"></select>
-                    </div>
-                    <div class="form-group" style="flex:1;">
-                      <label for="reloc-shelf">Shelf</label>
-                      <select id="reloc-shelf" onchange="onRelocShelfChange()"></select>
-                    </div>
-                  </div>
-                  <div style="display:flex;gap:8px;">
-                    <div class="form-group" style="flex:1;">
                       <label for="reloc-cell">Destination cell</label>
-                      <select id="reloc-cell"><option value="">— select shelf first —</option></select>
+                      <select id="reloc-cell"><option value="">Loading…</option></select>
                       <div style="font-size:11px;color:var(--text-3);margin-top:2px;" id="reloc-cell-count"></div>
                     </div>
                     <div class="form-group" style="flex:1;">
@@ -1798,51 +1788,46 @@ let relocSelectedSource = null;
 
 async function loadRelocatePage() {
   if (!relocConfig) relocConfig = await api('get_config');
-  const zoneKeys = Object.keys(relocConfig.zones).sort();
-  const zoneSel = document.getElementById('reloc-zone');
-  zoneSel.innerHTML = zoneKeys.map(z =>
-    `<option value="${z}">${relocConfig.zones[z].display_name} (${z})</option>`
-  ).join('');
-  onRelocZoneChange();
+  loadRelocCells();
   loadRelocRecent();
 }
 
-function onRelocZoneChange() {
-  const zone = document.getElementById('reloc-zone').value;
-  const shelves = relocConfig.zones[zone]?.shelves || {};
-  const shelfKeys = Object.keys(shelves).sort();
-  const shelfSel = document.getElementById('reloc-shelf');
-  shelfSel.innerHTML = shelfKeys.map(s => `<option value="${s}">${s}</option>`).join('');
-  onRelocShelfChange();
-}
-
-async function onRelocShelfChange() {
-  const zone = document.getElementById('reloc-zone').value;
-  const shelf = document.getElementById('reloc-shelf').value;
+async function loadRelocCells() {
   const cellSel = document.getElementById('reloc-cell');
   const countEl = document.getElementById('reloc-cell-count');
-  if (!shelf) {
-    cellSel.innerHTML = '<option value="">— select shelf first —</option>';
-    countEl.textContent = '';
-    return;
-  }
   cellSel.innerHTML = '<option value="">Loading…</option>';
-  const shelfCfg = relocConfig.zones[zone]?.shelves?.[shelf];
-  if (!shelfCfg) return;
-  const slotCounts = await api('get_cell_slot_counts', shelf);
+  const maxSlots = await api('get_max_slots');
+  const slotCounts = await api('get_all_cell_slot_counts');
   const cells = [];
-  for (let sec = 1; sec <= shelfCfg.sections; sec++) {
-    for (let row = 1; row <= shelfCfg.rows; row++) {
-      const code = `${shelf}-${String(sec).padStart(2,'0')}-${String(row).padStart(2,'0')}`;
-      const used = slotCounts[code] || 0;
-      if (used === 0) cells.push(code);
+  for (const [zoneKey, zone] of Object.entries(relocConfig.zones)) {
+    for (const [shelfKey, shelfCfg] of Object.entries(zone.shelves)) {
+      for (let sec = 1; sec <= shelfCfg.sections; sec++) {
+        for (let row = 1; row <= shelfCfg.rows; row++) {
+          const code = `${shelfKey}-${String(sec).padStart(2,'0')}-${String(row).padStart(2,'0')}`;
+          const used = slotCounts[code] || 0;
+          if (used === 0) cells.push(code);
+        }
+      }
     }
   }
-  if (cells.length === 0) {
+  const suggestedCells = relocSuggestions
+    .filter(s => s.location !== relocSelectedSource?.location_code)
+    .filter(s => (slotCounts[s.location] || 0) < maxSlots);
+  if (cells.length === 0 && suggestedCells.length === 0) {
     cellSel.innerHTML = '<option value="">No empty cells available</option>';
   } else {
-    cellSel.innerHTML = '<option value="">— select cell —</option>' +
-      cells.map(c => `<option value="${c}">${c}</option>`).join('');
+    let opts = '<option value="">— select cell —</option>';
+    if (suggestedCells.length > 0) {
+      suggestedCells.forEach(s => {
+        const dateStr = s.date?.substring(0, 10) || '';
+        opts += `<option value="${s.location}" style="color:#16a34a;font-weight:600;">★ ${s.location} (${dateStr})</option>`;
+      });
+      opts += '<option disabled style="border-top:1px solid #ccc;">──────────────</option>';
+    }
+    const suggestedSet = new Set(suggestedCells.map(s => s.location));
+    const remaining = cells.filter(c => !suggestedSet.has(c));
+    opts += remaining.map(c => `<option value="${c}">${c}</option>`).join('');
+    cellSel.innerHTML = opts;
   }
   countEl.textContent = `${cells.length} empty cell(s) available`;
 }
@@ -1876,7 +1861,9 @@ async function doRelocSearch() {
   window._relocResults = results;
 }
 
-function selectRelocSource(idx) {
+let relocSuggestions = [];
+
+async function selectRelocSource(idx) {
   const b = window._relocResults[idx];
   relocSelectedSource = b;
   document.querySelectorAll('#reloc-source-table tr').forEach(r => r.classList.remove('selected'));
@@ -1888,6 +1875,9 @@ function selectRelocSource(idx) {
   document.getElementById('reloc-source-summary').style.display = '';
   document.getElementById('reloc-qty').value = b.qty;
   document.getElementById('reloc-error').style.display = 'none';
+  const sourceDate = b.booked_at?.substring(0, 10) || '';
+  relocSuggestions = await api('get_location_suggestions', b.item_number, sourceDate);
+  loadRelocCells();
 }
 
 async function doRelocConfirm() {
@@ -1924,12 +1914,13 @@ async function doRelocConfirm() {
   if (res.ok) {
     showToast(`${qty} x ${relocSelectedSource.item_number} relocated to ${destCell}`);
     relocSelectedSource = null;
+    relocSuggestions = [];
     document.getElementById('reloc-source-summary').style.display = 'none';
     document.getElementById('reloc-source-table').innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text-3);"><i class="ti ti-package-import" style="font-size:36px;display:block;margin-bottom:8px;"></i><div style="font-size:13px;">Search for a part number to find stock to relocate</div></div>';
     document.getElementById('reloc-search').value = '';
     document.getElementById('reloc-qty').value = '1';
     document.getElementById('reloc-cell').value = '';
-    onRelocShelfChange();
+    loadRelocCells();
     loadRelocRecent();
   } else {
     errEl.textContent = res.error || 'Relocation failed';
