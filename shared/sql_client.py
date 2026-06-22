@@ -1,12 +1,13 @@
 """SQL Server connection factory for Rohteillager database."""
+import os
 import pyodbc
 
 CONN_STRING = (
     'DRIVER={SQL Server};'
-    'SERVER=DEBLNSVCS01;'
-    'DATABASE=Rohteillager;'
-    'UID=guehringCS01;'
-    'PWD=M+5WGWa..sD?gfC~RGHz'
+    f'SERVER={os.environ.get("WMS_DB_SERVER", "DEBLNSVCS01")};'
+    f'DATABASE={os.environ.get("WMS_DB_NAME", "Rohteillager")};'
+    f'UID={os.environ.get("WMS_DB_USER", "guehringCS01")};'
+    f'PWD={os.environ.get("WMS_DB_PASS", "")}'
 )
 
 

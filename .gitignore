@@ -1,4 +1,5 @@
-# Firebase credentials
+# Environment & secrets
+.env
 firebase-credentials.json
 google-services.json
 
@@ -6,7 +7,14 @@ google-services.json
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+.venv/
+venv/
 wms.db
+
+# Desktop app build artifacts
+desktop_app/build/
+desktop_app/dist/
 
 # Android
 tablet_android/.gradle/

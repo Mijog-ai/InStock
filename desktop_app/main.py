@@ -1,9 +1,15 @@
 import os
 import sys
-import webview
 
-from api import WmsApi
-from seed_db import seed
+# Add project root to path so shared package is importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.env import load_env
+load_env()
+
+import webview
+from desktop_app.api import WmsApi
+from shared.seed_db import seed
 
 if getattr(sys, 'frozen', False):
     TEMPLATES_DIR = os.path.join(sys._MEIPASS, "templates")

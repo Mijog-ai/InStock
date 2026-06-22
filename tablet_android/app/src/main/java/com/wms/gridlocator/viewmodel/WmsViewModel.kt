@@ -235,6 +235,15 @@ class WmsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    suspend fun getMergeCandidates(itemNumber: String): List<MergeCandidate> {
+        return try {
+            repo.getMergeCandidates(itemNumber)
+        } catch (e: Exception) {
+            android.util.Log.e("WmsViewModel", "getMergeCandidates failed", e)
+            emptyList()
+        }
+    }
+
     suspend fun searchStockForRelocation(itemNumber: String): List<Booking> {
         return try {
             repo.searchStock(itemNumber)

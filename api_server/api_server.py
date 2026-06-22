@@ -1,10 +1,18 @@
 """Flask REST API server for WMS Grid Locator — serves Android tablet over local network."""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.env import load_env
+load_env()
+
 import bcrypt
 from flask import Flask, request, jsonify
 
-import db_repository as repo
-import config_loader as config
-import erp_repository as erp
+from shared import db_repository as repo
+from shared import config_loader as config
+from shared import erp_repository as erp
 
 app = Flask(__name__)
 
@@ -133,6 +141,75 @@ def update_user_role(user_id):
 @app.route('/api/users/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     repo.delete_user(user_id)
+    return jsonify({"ok": True})
+
+
+# ── Relocation endpoints ──
+
+@app.route('/api/stock/search', methods=['POST'])
+def search_stock():
+    data = request.json
+    return jsonify(repo.search_stock_for_relocation(data["item_number"]))
+
+
+@app.route('/api/location-suggestions', methods=['POST'])
+def location_suggestions():
+    data = request.json
+    return jsonify(repo.get_location_suggestions(data["item_number"], data.get("source_date", "")))
+
+
+@app.route('/api/merge-candidates', methods=['POST'])
+def merge_candidates():
+    data = request.json
+    return jsonify(repo.get_merge_candidates(data["item_number"]))
+
+
+@app.route('/api/cell-slot-counts')
+def all_cell_slot_counts():
+    return jsonify(repo.get_all_cell_slot_counts())
+
+
+@app.route('/api/cell-slot-counts/<shelf_code>')
+def cell_slot_counts(shelf_code):
+    return jsonify(repo.get_cell_slot_counts(shelf_code))
+
+
+@app.route('/api/max-slots')
+def max_slots():
+    return jsonify(config.get_max_slots())
+
+
+@app.route('/api/relocate', methods=['POST'])
+def relocate():
+    data = request.json
+    result = repo.relocate(data["source_booking_id"], data["dest_location_code"], data["qty"], data.get("user", ""))
+    return jsonify(result)
+
+
+@app.route('/api/recent-relocations')
+def recent_relocations():
+    return jsonify(repo.get_recent_relocations())
+
+
+@app.route('/api/revert-relocation', methods=['POST'])
+def revert_relocation():
+    data = request.json
+    return jsonify(repo.revert_relocation(data["dest_booking_id"], data["original_source_location"], data["qty"], data.get("user", "")))
+
+
+# ── FIFO endpoints ──
+
+@app.route('/api/fifo/search', methods=['POST'])
+def search_fifo():
+    data = request.json
+    return jsonify(repo.search_fifo(data["item_number"]))
+
+
+@app.route('/api/fifo/consume', methods=['POST'])
+def consume_fifo():
+    data = request.json
+    for item in data["plan"]:
+        repo.consume(item["booking_id"], item["qty"], data.get("user", ""))
     return jsonify({"ok": True})
 
 

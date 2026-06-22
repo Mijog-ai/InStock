@@ -530,6 +530,41 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
 .reloc-recent-item .info .item-name { font-size: 13px; font-weight: 600; }
 .reloc-recent-item .info .route { font-size: 12px; font-weight: 500; color: var(--accent); }
 .reloc-recent-item .info .meta { font-size: 11px; color: var(--text-3); }
+
+/* ── Destination mode toggle ── */
+.dest-mode-toggle { display: flex; gap: 6px; }
+.dest-mode-btn {
+  flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); cursor: pointer; text-align: center; transition: all var(--transition);
+}
+.dest-mode-btn:hover { background: var(--surface-2); }
+.dest-mode-btn.active { border-color: var(--accent); background: var(--accent-bg); }
+.dest-mode-btn .mode-label { font-size: 13px; font-weight: 600; }
+.dest-mode-btn.active .mode-label { color: var(--accent); }
+.dest-mode-btn .mode-desc { font-size: 11px; color: var(--text-3); }
+.dest-cell-list { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.dest-cell-row {
+  display: flex; align-items: center; padding: 6px 10px; cursor: pointer;
+  border-bottom: 1px solid var(--border); font-size: 13px; transition: background var(--transition);
+}
+.dest-cell-row:last-child { border-bottom: none; }
+.dest-cell-row:hover { background: var(--surface-2); }
+.dest-cell-row.selected { background: rgba(26,86,219,0.08); }
+.dest-cell-row.selected .cell-loc { color: var(--accent); font-weight: 600; }
+.dest-cell-row.full { opacity: 0.45; cursor: default; }
+.dest-cell-row.suggested { background: rgba(14,122,78,0.04); }
+.dest-cell-row .cell-loc { flex: 1; font-family: var(--mono); font-weight: 500; }
+.dest-cell-row .cell-qty { width: 70px; text-align: right; font-family: var(--mono); }
+.dest-cell-row .cell-slots { width: 50px; text-align: center; font-size: 12px; color: var(--text-3); }
+.dest-cell-row .cell-star { color: var(--success); font-weight: 700; margin-right: 4px; }
+.dest-cell-row .cell-date { font-size: 11px; color: var(--text-3); font-family: var(--mono); }
+.badge-full { font-size: 10px; font-weight: 600; color: var(--danger); background: var(--danger-bg); padding: 1px 6px; border-radius: 4px; }
+.reloc-selected-dest {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  background: var(--accent-bg); border: 1px solid rgba(26,86,219,0.2); border-radius: var(--radius);
+}
+.reloc-selected-dest .label { font-size: 11px; color: var(--text-3); }
+.reloc-selected-dest .value { font-size: 14px; font-weight: 600; color: var(--accent); }
 </style>
 </head>
 <body>
@@ -680,6 +715,16 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
                   <tbody id="consumes-tbody"></tbody>
                 </table>
               </div>
+            </div>
+          </div>
+          <!-- Recent Relocations -->
+          <div class="card">
+            <div class="card-header">
+              <h2><i class="ti ti-transfer" style="font-size:16px;color:var(--accent);vertical-align:-2px;"></i> Recent relocations</h2>
+              <span class="badge badge-blue" id="reloc-count"></span>
+            </div>
+            <div class="reloc-recent-table" id="dash-reloc-body" style="padding:10px 16px;max-height:300px;overflow-y:auto;">
+              <div style="padding:20px 0;text-align:center;color:var(--text-3);font-size:13px;">Loading…</div>
             </div>
           </div>
         </div>
@@ -834,10 +879,6 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
       <!-- ── RELOCATE ── -->
       <div id="page-relocate" class="page">
         <div class="relocate-wrap">
-          <div>
-            <h1 class="page-title">Relocate Stock</h1>
-            <p class="page-subtitle">Move stock from one cell to another. Search for an item, pick a destination, and confirm.</p>
-          </div>
           <div class="relocate-body">
 
             <!-- Left: Source -->
@@ -871,33 +912,49 @@ label { font-size: 13px; font-weight: 500; color: var(--text-2); display: block;
               </div>
             </div>
 
-            <!-- Right: Destination + Recent -->
+            <!-- Right: Destination (Merge / New Location) -->
             <div class="relocate-right">
-              <div class="card">
+              <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
                 <div class="card-header"><h2>Step 2 — Destination</h2></div>
-                <div style="padding:12px 16px 16px 16px;display:flex;flex-direction:column;gap:10px;">
-                  <div style="display:flex;gap:8px;">
-                    <div class="form-group" style="flex:1;">
-                      <label for="reloc-cell">Destination cell</label>
-                      <select id="reloc-cell"><option value="">Loading…</option></select>
-                      <div style="font-size:11px;color:var(--text-3);margin-top:2px;" id="reloc-cell-count"></div>
+                <div style="padding:8px 16px 0 16px;">
+                  <div class="dest-mode-toggle">
+                    <div class="dest-mode-btn active" id="dest-mode-merge" onclick="setDestMode('merge')">
+                      <div class="mode-label"><i class="ti ti-git-merge" style="font-size:14px;vertical-align:-2px;"></i> Merge</div>
+                      <div class="mode-desc">Into cell with same item</div>
                     </div>
+                    <div class="dest-mode-btn" id="dest-mode-new" onclick="setDestMode('new')">
+                      <div class="mode-label"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;"></i> New Location</div>
+                      <div class="mode-desc">Move to an empty cell</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="padding:8px 16px 0 16px;" id="reloc-filter-wrap" class="hidden">
+                  <input type="text" id="reloc-cell-filter" placeholder="Filter cells..." style="height:30px;font-size:12px;" oninput="filterDestCells()"/>
+                </div>
+                <div class="dest-cell-list" id="reloc-dest-list" style="margin:8px 16px;flex:1;">
+                  <div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">Select source stock first</div>
+                </div>
+              </div>
+
+              <!-- Qty + Confirm (compact) -->
+              <div class="card" style="flex-shrink:0;">
+                <div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;">
+                  <div id="reloc-selected-dest-wrap" style="display:none;">
+                    <div class="reloc-selected-dest">
+                      <div><div class="label">Destination</div><div class="value" id="reloc-dest-display">—</div></div>
+                      <div id="reloc-dest-extra" style="margin-left:auto;"></div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:flex-end;">
                     <div class="form-group" style="flex:1;">
                       <label for="reloc-qty">Qty to relocate</label>
                       <input type="number" id="reloc-qty" min="1" value="1" style="text-align:center;font-weight:600;font-family:var(--mono);"/>
                     </div>
+                    <button class="btn btn-primary" onclick="doRelocConfirm()" style="flex:1;height:36px;font-size:14px;">
+                      <i class="ti ti-transfer"></i> Relocate
+                    </button>
                   </div>
                   <div id="reloc-error" style="display:none;color:var(--danger);font-size:13px;"></div>
-                  <button class="btn btn-primary" onclick="doRelocConfirm()" style="width:100%;height:40px;font-size:14px;">
-                    <i class="ti ti-transfer"></i> Confirm relocation
-                  </button>
-                </div>
-              </div>
-
-              <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
-                <div class="card-header"><h2>Recent relocations</h2></div>
-                <div class="reloc-recent-table" id="reloc-recent-body" style="padding:10px 16px;">
-                  <div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">Loading…</div>
                 </div>
               </div>
             </div>
@@ -1178,6 +1235,8 @@ async function loadDashboard() {
     api('get_recent_inputs', MOVEMENTS_LIMIT),
     api('get_recent_consumes', MOVEMENTS_LIMIT),
   ]);
+
+  loadDashRelocRecent();
 
   document.getElementById('input-count').textContent = `${inputs.length} recent`;
   document.getElementById('consume-count').textContent = `${consumes.length} recent`;
@@ -1785,57 +1844,146 @@ function closeModal(id) {
 
 let relocConfig = null;
 let relocSelectedSource = null;
+let relocSuggestions = [];
+let relocMergeCandidates = [];
+let relocDestMode = 'merge';
+let relocSelectedDest = '';
+let relocAllEmptyCells = [];
+let relocSlotCounts = {};
+let relocMaxSlots = 2;
 
 async function loadRelocatePage() {
   if (!relocConfig) relocConfig = await api('get_config');
-  loadRelocCells();
-  loadRelocRecent();
+  relocMaxSlots = await api('get_max_slots');
+  relocSlotCounts = await api('get_all_cell_slot_counts');
+  buildEmptyCellsList();
+  renderDestList();
 }
 
-async function loadRelocCells() {
-  const cellSel = document.getElementById('reloc-cell');
-  const countEl = document.getElementById('reloc-cell-count');
-  cellSel.innerHTML = '<option value="">Loading…</option>';
-  const maxSlots = await api('get_max_slots');
-  const slotCounts = await api('get_all_cell_slot_counts');
-  const cells = [];
+function buildEmptyCellsList() {
+  relocAllEmptyCells = [];
+  if (!relocConfig) return;
   for (const [zoneKey, zone] of Object.entries(relocConfig.zones)) {
     for (const [shelfKey, shelfCfg] of Object.entries(zone.shelves)) {
       for (let sec = 1; sec <= shelfCfg.sections; sec++) {
         for (let row = 1; row <= shelfCfg.rows; row++) {
           const code = `${shelfKey}-${String(sec).padStart(2,'0')}-${String(row).padStart(2,'0')}`;
-          const used = slotCounts[code] || 0;
-          if (used === 0) cells.push(code);
+          if ((relocSlotCounts[code] || 0) === 0) relocAllEmptyCells.push(code);
         }
       }
     }
   }
-  const suggestedCells = relocSuggestions
-    .filter(s => s.location !== relocSelectedSource?.location_code)
-    .filter(s => (slotCounts[s.location] || 0) < maxSlots);
-  if (cells.length === 0 && suggestedCells.length === 0) {
-    cellSel.innerHTML = '<option value="">No empty cells available</option>';
-  } else {
-    let opts = '<option value="">— select cell —</option>';
-    if (suggestedCells.length > 0) {
-      suggestedCells.forEach(s => {
-        const dateStr = s.date?.substring(0, 10) || '';
-        opts += `<option value="${s.location}" style="color:#16a34a;font-weight:600;">★ ${s.location} (${dateStr})</option>`;
-      });
-      opts += '<option disabled style="border-top:1px solid #ccc;">──────────────</option>';
-    }
-    const suggestedSet = new Set(suggestedCells.map(s => s.location));
-    const remaining = cells.filter(c => !suggestedSet.has(c));
-    opts += remaining.map(c => `<option value="${c}">${c}</option>`).join('');
-    cellSel.innerHTML = opts;
+}
+
+function setDestMode(mode) {
+  relocDestMode = mode;
+  relocSelectedDest = '';
+  updateDestSelection();
+  document.getElementById('dest-mode-merge').classList.toggle('active', mode === 'merge');
+  document.getElementById('dest-mode-new').classList.toggle('active', mode === 'new');
+  document.getElementById('reloc-filter-wrap').classList.toggle('hidden', mode !== 'new');
+  if (mode === 'new') document.getElementById('reloc-cell-filter').value = '';
+  renderDestList();
+}
+
+function selectDestCell(loc) {
+  relocSelectedDest = loc;
+  updateDestSelection();
+  renderDestList();
+}
+
+function updateDestSelection() {
+  const wrap = document.getElementById('reloc-selected-dest-wrap');
+  if (!relocSelectedDest) {
+    wrap.style.display = 'none';
+    return;
   }
-  countEl.textContent = `${cells.length} empty cell(s) available`;
+  wrap.style.display = '';
+  document.getElementById('reloc-dest-display').textContent = relocSelectedDest;
+  const extra = document.getElementById('reloc-dest-extra');
+  if (relocDestMode === 'merge') {
+    const cand = relocMergeCandidates.find(c => c.location_code === relocSelectedDest);
+    extra.innerHTML = cand ? `<div><span class="label">Current stock</span> <span style="font-weight:600;">${cand.item_qty}</span></div>` : '';
+  } else {
+    extra.innerHTML = '';
+  }
+}
+
+function filterDestCells() {
+  renderDestList();
+}
+
+function renderDestList() {
+  const listEl = document.getElementById('reloc-dest-list');
+
+  if (!relocSelectedSource) {
+    listEl.innerHTML = '<div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">Select source stock first</div>';
+    return;
+  }
+
+  if (relocDestMode === 'merge') {
+    const candidates = relocMergeCandidates.filter(c => c.location_code !== relocSelectedSource.location_code);
+    if (candidates.length === 0) {
+      listEl.innerHTML = '<div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">No locations with this item</div>';
+      return;
+    }
+    let html = `<div style="display:flex;padding:6px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text-3);">
+      <span style="flex:1;">Location</span><span style="width:80px;text-align:right;">Current Stock</span><span style="width:60px;text-align:center;">Slots</span>
+    </div>`;
+    candidates.forEach(c => {
+      const isFull = c.slot_count >= relocMaxSlots;
+      const isSelected = c.location_code === relocSelectedDest;
+      const cls = ['dest-cell-row'];
+      if (isFull) cls.push('full');
+      if (isSelected) cls.push('selected');
+      html += `<div class="${cls.join(' ')}" ${isFull ? '' : `onclick="selectDestCell('${c.location_code}')"`}>
+        <span class="cell-loc">${c.location_code}</span>
+        <span class="cell-qty">${c.item_qty}</span>
+        <span class="cell-slots">${isFull ? '<span class="badge-full">Full</span>' : c.slot_count + '/' + relocMaxSlots}</span>
+      </div>`;
+    });
+    listEl.innerHTML = html;
+  } else {
+    const filter = (document.getElementById('reloc-cell-filter').value || '').trim().toLowerCase();
+    const filtered = filter ? relocAllEmptyCells.filter(c => c.toLowerCase().includes(filter)) : relocAllEmptyCells;
+
+    const suggestedLocs = relocSuggestions
+      .filter(s => s.location !== relocSelectedSource.location_code)
+      .filter(s => (relocSlotCounts[s.location] || 0) < relocMaxSlots);
+    const suggestedSet = new Set(suggestedLocs.map(s => s.location));
+    const rest = filtered.filter(c => !suggestedSet.has(c));
+
+    if (suggestedLocs.length === 0 && rest.length === 0) {
+      listEl.innerHTML = `<div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">${filter ? 'No matches for "' + filter + '"' : 'All cells full'}</div>`;
+      return;
+    }
+    let html = '';
+    suggestedLocs.forEach(s => {
+      const isSelected = s.location === relocSelectedDest;
+      html += `<div class="dest-cell-row suggested${isSelected ? ' selected' : ''}" onclick="selectDestCell('${s.location}')">
+        <span class="cell-loc"><span class="cell-star">★</span>${s.location}</span>
+        <span class="cell-date">${(s.date || '').substring(0, 10)}</span>
+      </div>`;
+    });
+    if (suggestedLocs.length > 0 && rest.length > 0) {
+      html += '<div style="border-bottom:2px solid var(--border);"></div>';
+    }
+    rest.forEach(c => {
+      const isSelected = c === relocSelectedDest;
+      html += `<div class="dest-cell-row${isSelected ? ' selected' : ''}" onclick="selectDestCell('${c}')">
+        <span class="cell-loc">${c}</span>
+      </div>`;
+    });
+    listEl.innerHTML = html;
+  }
 }
 
 async function doRelocSearch() {
   const query = document.getElementById('reloc-search').value.trim();
   if (!query) return;
   relocSelectedSource = null;
+  relocSelectedDest = '';
+  updateDestSelection();
   document.getElementById('reloc-source-summary').style.display = 'none';
   const tableEl = document.getElementById('reloc-source-table');
   tableEl.innerHTML = '<div style="padding:30px 0;text-align:center;color:var(--text-3);"><i class="ti ti-loader" style="font-size:24px;"></i> Searching…</div>';
@@ -1845,6 +1993,7 @@ async function doRelocSearch() {
       <div style="color:var(--danger);font-weight:600;">No stock found</div>
       <div style="color:var(--text-3);font-size:13px;">No active bookings for "${query}"</div>
     </div>`;
+    renderDestList();
     return;
   }
   tableEl.innerHTML = `<table>
@@ -1861,11 +2010,11 @@ async function doRelocSearch() {
   window._relocResults = results;
 }
 
-let relocSuggestions = [];
-
 async function selectRelocSource(idx) {
   const b = window._relocResults[idx];
   relocSelectedSource = b;
+  relocSelectedDest = '';
+  updateDestSelection();
   document.querySelectorAll('#reloc-source-table tr').forEach(r => r.classList.remove('selected'));
   const row = document.getElementById('reloc-row-' + idx);
   if (row) row.classList.add('selected');
@@ -1875,9 +2024,18 @@ async function selectRelocSource(idx) {
   document.getElementById('reloc-source-summary').style.display = '';
   document.getElementById('reloc-qty').value = b.qty;
   document.getElementById('reloc-error').style.display = 'none';
+
   const sourceDate = b.booked_at?.substring(0, 10) || '';
-  relocSuggestions = await api('get_location_suggestions', b.item_number, sourceDate);
-  loadRelocCells();
+  const [suggestions, candidates] = await Promise.all([
+    api('get_location_suggestions', b.item_number, sourceDate),
+    api('get_merge_candidates', b.item_number),
+  ]);
+  relocSuggestions = suggestions;
+  relocMergeCandidates = candidates;
+
+  relocSlotCounts = await api('get_all_cell_slot_counts');
+  buildEmptyCellsList();
+  renderDestList();
 }
 
 async function doRelocConfirm() {
@@ -1887,8 +2045,7 @@ async function doRelocConfirm() {
     errEl.style.display = '';
     return;
   }
-  const destCell = document.getElementById('reloc-cell').value;
-  if (!destCell) {
+  if (!relocSelectedDest) {
     errEl.textContent = 'Select a destination cell.';
     errEl.style.display = '';
     return;
@@ -1904,35 +2061,39 @@ async function doRelocConfirm() {
     errEl.style.display = '';
     return;
   }
-  if (destCell === relocSelectedSource.location_code) {
+  if (relocSelectedDest === relocSelectedSource.location_code) {
     errEl.textContent = 'Destination must be different from source.';
     errEl.style.display = '';
     return;
   }
   errEl.style.display = 'none';
-  const res = await api('relocate', relocSelectedSource.id, destCell, qty);
+  const res = await api('relocate', relocSelectedSource.id, relocSelectedDest, qty);
   if (res.ok) {
-    showToast(`${qty} x ${relocSelectedSource.item_number} relocated to ${destCell}`);
+    showToast(`${qty} x ${relocSelectedSource.item_number} relocated to ${relocSelectedDest}`);
     relocSelectedSource = null;
     relocSuggestions = [];
+    relocMergeCandidates = [];
+    relocSelectedDest = '';
+    updateDestSelection();
     document.getElementById('reloc-source-summary').style.display = 'none';
     document.getElementById('reloc-source-table').innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text-3);"><i class="ti ti-package-import" style="font-size:36px;display:block;margin-bottom:8px;"></i><div style="font-size:13px;">Search for a part number to find stock to relocate</div></div>';
     document.getElementById('reloc-search').value = '';
     document.getElementById('reloc-qty').value = '1';
-    document.getElementById('reloc-cell').value = '';
-    loadRelocCells();
-    loadRelocRecent();
+    relocSlotCounts = await api('get_all_cell_slot_counts');
+    buildEmptyCellsList();
+    renderDestList();
   } else {
     errEl.textContent = res.error || 'Relocation failed';
     errEl.style.display = '';
   }
 }
 
-async function loadRelocRecent() {
-  const body = document.getElementById('reloc-recent-body');
+async function loadDashRelocRecent() {
+  const body = document.getElementById('dash-reloc-body');
   const items = await api('get_recent_relocations');
+  document.getElementById('reloc-count').textContent = `${items.length} recent`;
   if (items.length === 0) {
-    body.innerHTML = '<div style="padding:30px 0;text-align:center;color:var(--text-3);font-size:13px;">No recent relocations</div>';
+    body.innerHTML = '<div style="padding:20px 0;text-align:center;color:var(--text-3);font-size:13px;">No recent relocations</div>';
     return;
   }
   body.innerHTML = items.map(r => `
@@ -1942,19 +2103,19 @@ async function loadRelocRecent() {
         <div class="route">${r.from_location} → ${r.to_location}</div>
         <div class="meta">Qty: ${r.qty} · ${r.moved_by} · ${r.moved_at?.substring(0,10) || ''}</div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="doRelocRevert('${r.dest_booking_id}','${r.from_location}',${r.qty},'${r.item_number}')">
+      <button class="btn btn-danger btn-sm" onclick="doDashRelocRevert('${r.dest_booking_id}','${r.from_location}',${r.qty},'${r.item_number}')">
         <i class="ti ti-arrow-back-up" style="font-size:14px;"></i> Revert
       </button>
     </div>
   `).join('');
 }
 
-async function doRelocRevert(destBookingId, fromLocation, qty, itemNumber) {
+async function doDashRelocRevert(destBookingId, fromLocation, qty, itemNumber) {
   if (!confirm(`Revert relocation?\n\n${itemNumber}: move ${qty} back to ${fromLocation}`)) return;
   const res = await api('revert_relocation', destBookingId, fromLocation, qty);
   if (res.ok) {
     showToast(`Relocation of ${itemNumber} reverted`);
-    loadRelocRecent();
+    loadDashRelocRecent();
   } else {
     showToast(res.error || 'Revert failed', 'error');
   }

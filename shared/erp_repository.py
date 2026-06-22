@@ -1,7 +1,7 @@
 """Fetch recent raw material deliveries from the ERP system."""
 from datetime import datetime, date
 from decimal import Decimal
-from erp_connection import get_erp_connection, IS_SQLITE
+from shared.erp_connection import get_erp_connection, IS_SQLITE
 
 
 def _serialize_row(row):
@@ -75,5 +75,3 @@ def get_recent_deliveries():
     except Exception as e:
         print(f"[ERP] Query error: {e}")
         return []
-
-

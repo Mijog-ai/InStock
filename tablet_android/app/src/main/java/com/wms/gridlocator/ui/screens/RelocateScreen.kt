@@ -12,15 +12,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wms.gridlocator.data.Booking
-import com.wms.gridlocator.data.RecentRelocation
+import com.wms.gridlocator.data.MergeCandidate
 import com.wms.gridlocator.i18n.LocalAppStrings
 import com.wms.gridlocator.ui.theme.*
 import com.wms.gridlocator.viewmodel.WmsViewModel
 import kotlinx.coroutines.launch
+
+private enum class DestinationMode { MERGE, NEW_LOCATION }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,42 +41,44 @@ fun RelocateScreen(viewModel: WmsViewModel) {
     var selectedSource by remember { mutableStateOf<Booking?>(null) }
 
     // Destination state
+    var destinationMode by remember { mutableStateOf(DestinationMode.MERGE) }
     var availableCells by remember { mutableStateOf<List<String>>(emptyList()) }
     var cellSlotCounts by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var loadingCells by remember { mutableStateOf(false) }
     var selectedDestCell by remember { mutableStateOf("") }
+    var cellFilter by remember { mutableStateOf("") }
 
-    // Location suggestions based on same part number
+    // Merge candidates
+    var mergeCandidates by remember { mutableStateOf<List<MergeCandidate>>(emptyList()) }
+    var loadingMerge by remember { mutableStateOf(false) }
+
+    // Location suggestions
     var locationSuggestions by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
-
-    var cellExpanded by remember { mutableStateOf(false) }
 
     // Qty + validation
     var relocateQty by remember { mutableStateOf("") }
     var validationError by remember { mutableStateOf<String?>(null) }
     var relocating by remember { mutableStateOf(false) }
 
-    // Recent relocations
-    var recentRelocations by remember { mutableStateOf<List<RecentRelocation>>(emptyList()) }
-    var loadingRecent by remember { mutableStateOf(true) }
-    var revertTarget by remember { mutableStateOf<RecentRelocation?>(null) }
     var refreshTrigger by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(refreshTrigger) {
-        loadingRecent = true
-        recentRelocations = viewModel.getRecentRelocations()
-        loadingRecent = false
-    }
-
     LaunchedEffect(selectedSource) {
-        locationSuggestions = if (selectedSource != null) {
+        if (selectedSource != null) {
             val srcDate = selectedSource!!.bookedAt.take(10)
-            viewModel.getLocationSuggestions(selectedSource!!.itemNumber, srcDate)
+            locationSuggestions = viewModel.getLocationSuggestions(selectedSource!!.itemNumber, srcDate)
                 .filter { it.first != selectedSource!!.locationCode }
-        } else emptyList()
+            loadingMerge = true
+            mergeCandidates = viewModel.getMergeCandidates(selectedSource!!.itemNumber)
+                .filter { it.locationCode != selectedSource!!.locationCode }
+            loadingMerge = false
+        } else {
+            locationSuggestions = emptyList()
+            mergeCandidates = emptyList()
+        }
+        selectedDestCell = ""
     }
 
-    // Load all available cells across all zones/shelves
+    // Load all available empty cells
     LaunchedEffect(Unit) {
         loadingCells = true
         val slotCounts = viewModel.getAllCellSlotCounts()
@@ -94,45 +99,10 @@ fun RelocateScreen(viewModel: WmsViewModel) {
         loadingCells = false
     }
 
-    // Revert confirmation dialog
-    revertTarget?.let { target ->
-        AlertDialog(
-            onDismissRequest = { revertTarget = null },
-            title = { Text(s.revertConfirmTitle, fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(s.revertConfirmMessage)
-                    Spacer(Modifier.height(8.dp))
-                    Text("${s.item}: ${target.itemNumber}", fontSize = 13.sp, color = TextSecondary)
-                    Text("${target.toLocation} → ${target.fromLocation}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Accent)
-                    Text("${s.qty}: ${target.qty}", fontSize = 13.sp, color = TextSecondary)
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.revertRelocation(target.destBookingId, target.fromLocation, target.qty)
-                        revertTarget = null
-                        refreshTrigger++
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = CellRed)
-                ) { Text(s.revert, fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { revertTarget = null }) { Text(s.cancel) }
-            }
-        )
-    }
-
     Column(
         modifier = Modifier.fillMaxSize().background(Surface).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column {
-            Text(s.relocateScreenTitle, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-            Text(s.relocateScreenSubtitle, fontSize = 13.sp, color = TextSecondary)
-        }
-
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -147,7 +117,6 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                     Text(s.step1Source, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                     Spacer(Modifier.height(8.dp))
 
-                    // Search
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.Bottom
@@ -181,7 +150,6 @@ fun RelocateScreen(viewModel: WmsViewModel) {
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Results table
                     Surface(
                         modifier = Modifier.fillMaxWidth().weight(1f),
                         shape = RoundedCornerShape(8.dp),
@@ -250,7 +218,6 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                         }
                     }
 
-                    // Selected source summary
                     if (selectedSource != null) {
                         Spacer(Modifier.height(8.dp))
                         val src = selectedSource!!
@@ -283,86 +250,278 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                 }
             }
 
-            // ── Right: Destination + Confirm + Recent Relocations ──
+            // ── Right: Destination + Recent Relocations ──
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Destination card
+                // ── Destination: Mode toggle + Cell list (combined card) ──
                 Card(
+                    modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(s.step2Destination, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Spacer(Modifier.height(12.dp))
-
-                        // Destination cell + Qty in a row
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ExposedDropdownMenuBox(
-                                expanded = cellExpanded,
-                                onExpandedChange = { cellExpanded = !cellExpanded },
-                                modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Header: title + mode toggle
+                        Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 8.dp)) {
+                            Text(s.step2Destination, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Spacer(Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                OutlinedTextField(
-                                    value = selectedDestCell.ifBlank { "" },
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text(s.selectDestCell) },
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(cellExpanded) },
-                                    modifier = Modifier.menuAnchor(),
-                                    supportingText = {
-                                        if (loadingCells) Text("...", fontSize = 12.sp)
-                                        else Text("${availableCells.size} ${s.available}", fontSize = 12.sp, color = TextSecondary)
+                                DestModeButton(
+                                    label = s.mergeStock,
+                                    subtitle = s.mergeDescription,
+                                    isActive = destinationMode == DestinationMode.MERGE,
+                                    modifier = Modifier.weight(1f)
+                                ) { destinationMode = DestinationMode.MERGE; selectedDestCell = "" }
+                                DestModeButton(
+                                    label = s.newStockLocation,
+                                    subtitle = s.newLocationDescription,
+                                    isActive = destinationMode == DestinationMode.NEW_LOCATION,
+                                    modifier = Modifier.weight(1f)
+                                ) { destinationMode = DestinationMode.NEW_LOCATION; selectedDestCell = "" }
+                            }
+                        }
+                        HorizontalDivider(color = Border.copy(alpha = 0.3f))
+
+                        // Cell list body
+                        if (selectedSource == null) {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(s.selectSourceFirst, color = TextSecondary, fontSize = 13.sp)
+                            }
+                        } else if (destinationMode == DestinationMode.MERGE) {
+                            // ── Merge: cells with same item, sorted lowest-filled first ──
+                            if (loadingMerge) {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                }
+                            } else if (mergeCandidates.isEmpty()) {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(s.noMergeCandidates, fontSize = 14.sp, color = TextSecondary)
+                                }
+                            } else {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(SurfaceContainer)
+                                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        Text(s.location, Modifier.weight(1.5f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                        Text(s.currentStock, Modifier.weight(1f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                                        Text(s.slotsUsed, Modifier.weight(1f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
                                     }
-                                )
-                                ExposedDropdownMenu(
-                                    expanded = cellExpanded,
-                                    onDismissRequest = { cellExpanded = false },
-                                    modifier = Modifier.heightIn(max = 300.dp)
-                                ) {
-                                    val suggestedCells = locationSuggestions
-                                        .filter { (cellSlotCounts[it.first] ?: 0) < maxSlots }
-                                    if (availableCells.isEmpty() && suggestedCells.isEmpty()) {
-                                        DropdownMenuItem(
-                                            text = { Text(s.allCellsFull, color = CellRed) },
-                                            onClick = { cellExpanded = false }
-                                        )
-                                    } else {
-                                        suggestedCells.forEach { (loc, dateStr) ->
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        "★ $loc (${dateStr.take(10)})",
-                                                        color = CellGreen,
-                                                        fontWeight = FontWeight.SemiBold
+                                    LazyColumn(modifier = Modifier.weight(1f)) {
+                                        itemsIndexed(mergeCandidates) { idx, candidate ->
+                                            val isFull = candidate.slotCount >= maxSlots
+                                            val isSelected = candidate.locationCode == selectedDestCell
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .then(
+                                                        if (!isFull) Modifier.clickable {
+                                                            selectedDestCell = candidate.locationCode
+                                                            validationError = null
+                                                        } else Modifier
                                                     )
-                                                },
-                                                onClick = {
-                                                    selectedDestCell = loc
-                                                    cellExpanded = false
-                                                    validationError = null
+                                                    .background(
+                                                        when {
+                                                            isSelected -> Accent.copy(alpha = 0.12f)
+                                                            isFull -> CellRed.copy(alpha = 0.05f)
+                                                            else -> SurfaceWhite
+                                                        }
+                                                    )
+                                                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    candidate.locationCode,
+                                                    Modifier.weight(1.5f),
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = if (isFull) TextSecondary.copy(alpha = 0.5f) else Accent
+                                                )
+                                                Text(
+                                                    "${candidate.itemQty}",
+                                                    Modifier.weight(1f),
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isFull) TextSecondary.copy(alpha = 0.5f) else TextPrimary
+                                                )
+                                                if (isFull) {
+                                                    Surface(
+                                                        modifier = Modifier.weight(1f),
+                                                        shape = RoundedCornerShape(999.dp),
+                                                        color = CellRed.copy(alpha = 0.1f)
+                                                    ) {
+                                                        Text(
+                                                            s.cellFull,
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = CellRed,
+                                                            textAlign = TextAlign.Center
+                                                        )
+                                                    }
+                                                } else {
+                                                    Text(
+                                                        "${candidate.slotCount}/$maxSlots",
+                                                        Modifier.weight(1f),
+                                                        fontSize = 12.sp,
+                                                        color = if (isSelected) Accent else TextSecondary
+                                                    )
                                                 }
-                                            )
-                                        }
-                                        if (suggestedCells.isNotEmpty()) {
-                                            HorizontalDivider(color = Border, thickness = 1.dp)
-                                        }
-                                        val remaining = availableCells.filter { cell -> suggestedCells.none { it.first == cell } }
-                                        remaining.forEach { cell ->
-                                            DropdownMenuItem(
-                                                text = { Text(cell) },
-                                                onClick = {
-                                                    selectedDestCell = cell
-                                                    cellExpanded = false
-                                                    validationError = null
-                                                }
-                                            )
+                                            }
+                                            if (idx < mergeCandidates.lastIndex) {
+                                                HorizontalDivider(color = Border.copy(alpha = 0.3f))
+                                            }
                                         }
                                     }
                                 }
                             }
+                        } else {
+                            // ── New Location: empty cells with filter ──
+                            Column(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp)) {
+                                OutlinedTextField(
+                                    value = cellFilter,
+                                    onValueChange = { cellFilter = it },
+                                    placeholder = { Text(s.filterCells, fontSize = 12.sp) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                                )
+                                Spacer(Modifier.height(6.dp))
 
+                                val filteredCells = remember(availableCells, cellFilter) {
+                                    val q = cellFilter.trim().lowercase()
+                                    if (q.isEmpty()) availableCells
+                                    else availableCells.filter { it.lowercase().contains(q) }
+                                }
+
+                                if (loadingCells) {
+                                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                    }
+                                } else if (filteredCells.isEmpty()) {
+                                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                                        Text(
+                                            if (cellFilter.isNotEmpty()) "${s.noMatches} \"$cellFilter\"" else s.allCellsFull,
+                                            color = TextSecondary, fontSize = 13.sp
+                                        )
+                                    }
+                                } else {
+                                    val suggestedSet = locationSuggestions.map { it.first }.toSet()
+                                    val suggested = filteredCells.filter { it in suggestedSet }
+                                    val rest = filteredCells.filter { it !in suggestedSet }
+
+                                    LazyColumn(modifier = Modifier.weight(1f)) {
+                                        if (suggested.isNotEmpty()) {
+                                            items(suggested.size) { idx ->
+                                                val cell = suggested[idx]
+                                                val dateStr = locationSuggestions.firstOrNull { it.first == cell }?.second ?: ""
+                                                val isSelected = cell == selectedDestCell
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clickable {
+                                                            selectedDestCell = cell
+                                                            validationError = null
+                                                        }
+                                                        .background(if (isSelected) Accent.copy(alpha = 0.12f) else CellGreen.copy(alpha = 0.06f))
+                                                        .padding(horizontal = 10.dp, vertical = 7.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text("★ ", color = CellGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                                        Text(cell, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = CellGreen)
+                                                    }
+                                                    Text(dateStr.take(10), fontSize = 11.sp, color = TextSecondary)
+                                                }
+                                                if (idx < suggested.lastIndex || rest.isNotEmpty()) {
+                                                    HorizontalDivider(color = Border.copy(alpha = 0.3f))
+                                                }
+                                            }
+                                            if (rest.isNotEmpty()) {
+                                                item { HorizontalDivider(color = Border, thickness = 1.dp) }
+                                            }
+                                        }
+
+                                        items(rest.size) { idx ->
+                                            val cell = rest[idx]
+                                            val isSelected = cell == selectedDestCell
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        selectedDestCell = cell
+                                                        validationError = null
+                                                    }
+                                                    .background(if (isSelected) Accent.copy(alpha = 0.12f) else SurfaceWhite)
+                                                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    cell,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                                    color = if (isSelected) Accent else TextPrimary
+                                                )
+                                            }
+                                            if (idx < rest.lastIndex) {
+                                                HorizontalDivider(color = Border.copy(alpha = 0.2f))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Qty + Confirm (compact) ──
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = SurfaceWhite,
+                    border = BorderStroke(1.dp, Border.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        if (selectedDestCell.isNotBlank()) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                color = Accent.copy(alpha = 0.08f),
+                                border = BorderStroke(1.dp, Accent.copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(s.destinationLocation, fontSize = 10.sp, color = TextSecondary)
+                                        Text(selectedDestCell, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Accent)
+                                    }
+                                    if (destinationMode == DestinationMode.MERGE) {
+                                        val candidate = mergeCandidates.find { it.locationCode == selectedDestCell }
+                                        if (candidate != null) {
+                                            Column(horizontalAlignment = Alignment.End) {
+                                                Text(s.currentStock, fontSize = 10.sp, color = TextSecondary)
+                                                Text("${candidate.itemQty}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             OutlinedTextField(
                                 value = relocateQty,
                                 onValueChange = {
@@ -374,122 +533,81 @@ fun RelocateScreen(viewModel: WmsViewModel) {
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
+                            Button(
+                                onClick = {
+                                    val src = selectedSource
+                                    val q = relocateQty.toIntOrNull() ?: 0
+                                    when {
+                                        src == null -> validationError = s.selectSourceStock
+                                        selectedDestCell.isBlank() -> validationError = s.selectDestCell
+                                        q <= 0 -> validationError = s.qtyMustBePositive
+                                        q > src.qty -> validationError = "${s.maxAvailable}: ${src.qty}"
+                                        selectedDestCell == src.locationCode -> validationError = s.selectDestCell
+                                        else -> {
+                                            validationError = null
+                                            relocating = true
+                                            scope.launch {
+                                                viewModel.relocate(src.id, selectedDestCell, q)
+                                                relocating = false
+                                                selectedSource = null
+                                                searchResults = emptyList()
+                                                searched = false
+                                                searchQuery = ""
+                                                relocateQty = ""
+                                                selectedDestCell = ""
+                                                cellFilter = ""
+                                                mergeCandidates = emptyList()
+                                                refreshTrigger++
+                                            }
+                                        }
+                                    }
+                                },
+                                enabled = !relocating,
+                                modifier = Modifier.height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Accent)
+                            ) {
+                                Text(s.relocateConfirm, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
 
                         validationError?.let {
-                            Text(it, color = CellRed, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        Button(
-                            onClick = {
-                                val src = selectedSource
-                                val q = relocateQty.toIntOrNull() ?: 0
-                                when {
-                                    src == null -> validationError = s.selectSourceStock
-                                    selectedDestCell.isBlank() -> validationError = s.selectDestCell
-                                    q <= 0 -> validationError = s.qtyMustBePositive
-                                    q > src.qty -> validationError = "${s.maxAvailable}: ${src.qty}"
-                                    selectedDestCell == src.locationCode -> validationError = s.selectDestCell
-                                    else -> {
-                                        validationError = null
-                                        relocating = true
-                                        scope.launch {
-                                            viewModel.relocate(src.id, selectedDestCell, q)
-                                            relocating = false
-                                            selectedSource = null
-                                            searchResults = emptyList()
-                                            searched = false
-                                            searchQuery = ""
-                                            relocateQty = ""
-                                            selectedDestCell = ""
-                                            refreshTrigger++
-                                        }
-                                    }
-                                }
-                            },
-                            enabled = !relocating,
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Accent)
-                        ) {
-                            Text(s.relocateConfirm, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(it, color = CellRed, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
                         }
                     }
                 }
 
-                // ── Recent relocations with revert ──
-                Card(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-                ) {
-                    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                        Text(s.recentRelocations, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Spacer(Modifier.height(8.dp))
-
-                        if (loadingRecent) {
-                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            }
-                        } else if (recentRelocations.isEmpty()) {
-                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(s.noRecentRelocations, color = TextSecondary, fontSize = 13.sp)
-                            }
-                        } else {
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                itemsIndexed(recentRelocations) { _, reloc ->
-                                    Surface(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = Surface,
-                                        border = BorderStroke(1.dp, Border.copy(alpha = 0.3f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    reloc.itemNumber,
-                                                    fontSize = 13.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = TextPrimary,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Text(
-                                                    "${reloc.fromLocation} → ${reloc.toLocation}",
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = Accent
-                                                )
-                                                Text(
-                                                    "${s.qty}: ${reloc.qty} · ${reloc.movedBy} · ${
-                                                        if (reloc.movedAt.length >= 10) reloc.movedAt.substring(0, 10) else reloc.movedAt
-                                                    }",
-                                                    fontSize = 11.sp,
-                                                    color = TextSecondary
-                                                )
-                                            }
-                                            OutlinedButton(
-                                                onClick = { revertTarget = reloc },
-                                                modifier = Modifier.height(36.dp),
-                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = CellRed),
-                                                border = BorderStroke(1.dp, CellRed.copy(alpha = 0.5f))
-                                            ) {
-                                                Text(s.revert, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
+        }
+    }
+}
+
+@Composable
+private fun DestModeButton(
+    label: String,
+    subtitle: String,
+    isActive: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        color = if (isActive) Accent.copy(alpha = 0.12f) else SurfaceContainer,
+        border = if (isActive) BorderStroke(2.dp, Accent) else BorderStroke(1.dp, Border)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Text(
+                label,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isActive) Accent else TextSecondary
+            )
+            Text(
+                subtitle,
+                fontSize = 10.sp,
+                color = if (isActive) Accent.copy(alpha = 0.7f) else TextSecondary.copy(alpha = 0.7f)
+            )
         }
     }
 }

@@ -1,7 +1,7 @@
 import bcrypt
-import db_repository as repo
-import config_loader as config
-import erp_repository as erp
+from shared import db_repository as repo
+from shared import config_loader as config
+from shared import erp_repository as erp
 
 
 class WmsApi:
@@ -95,7 +95,6 @@ class WmsApi:
         return repo.search_fifo(item_number)
 
     def consume_fifo(self, plan):
-        """plan is a list of {booking_id, qty} dicts."""
         for item in plan:
             repo.consume(item["booking_id"], item["qty"], self._username)
         return {"ok": True}
@@ -105,6 +104,9 @@ class WmsApi:
 
     def get_location_suggestions(self, item_number, source_date):
         return repo.get_location_suggestions(item_number, source_date)
+
+    def get_merge_candidates(self, item_number):
+        return repo.get_merge_candidates(item_number)
 
     def get_cell_slot_counts(self, shelf_code):
         return repo.get_cell_slot_counts(shelf_code)

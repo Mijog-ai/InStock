@@ -1,6 +1,6 @@
 """Seed SQL Server with users table and default users."""
 import bcrypt
-import db_repository as repo
+from shared import db_repository as repo
 
 
 def seed():

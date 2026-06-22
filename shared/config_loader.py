@@ -1,14 +1,14 @@
-"""Grid config loader — reads from local grid_config.json file."""
+"""Grid config loader — reads from grid_config.json at project root."""
 import json
 import os
-
 import sys
 
 _config = None
+
 if getattr(sys, 'frozen', False):
     _CONFIG_PATH = os.path.join(sys._MEIPASS, "grid_config.json")
 else:
-    _CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "grid_config.json")
+    _CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "grid_config.json")
 
 
 def load_config():

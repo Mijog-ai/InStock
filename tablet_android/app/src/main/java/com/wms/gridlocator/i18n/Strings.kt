@@ -80,6 +80,16 @@ data class AppStrings(
     val revertedMessage: String,
     val noRecentRelocations: String,
     val movedBy: String,
+    val mergeStock: String,
+    val newStockLocation: String,
+    val mergeDescription: String,
+    val newLocationDescription: String,
+    val currentStock: String,
+    val slotsUsed: String,
+    val cellFull: String,
+    val noMergeCandidates: String,
+    val filterCells: String,
+    val selectSourceFirst: String,
 
     // Cell details dialog
     val occupiedStatus: String,
@@ -192,6 +202,16 @@ object Strings {
         revertedMessage = "Umlagerung rückgängig gemacht",
         noRecentRelocations = "Keine aktuellen Umlagerungen",
         movedBy = "Umgelagert von",
+        mergeStock = "Zusammenführen",
+        newStockLocation = "Neuer Lagerplatz",
+        mergeDescription = "In Lagerplatz mit gleichem Artikel",
+        newLocationDescription = "In leeren Lagerplatz einlagern",
+        currentStock = "Aktueller Bestand",
+        slotsUsed = "Belegung",
+        cellFull = "Voll",
+        noMergeCandidates = "Keine Lagerorte mit diesem Artikel",
+        filterCells = "Plätze filtern...",
+        selectSourceFirst = "Zuerst Quellbestand auswählen",
 
         occupiedStatus = "BELEGT",
         activeSlotsFormat = "aktive(r) Platz/Plätze",
@@ -206,7 +226,7 @@ object Strings {
         confirm = "Bestätigen",
         consumedMessage = "Einheiten verbraucht",
 
-        tabGridZones = "Rasterplaner",
+        tabGridZones = "Dashboard",
         tabInputStock = "Einlagern",
         tabConsumeStock = "Auslagern",
 
@@ -299,6 +319,16 @@ object Strings {
         revertedMessage = "Relocation reverted",
         noRecentRelocations = "No recent relocations",
         movedBy = "Moved by",
+        mergeStock = "Merge",
+        newStockLocation = "New Location",
+        mergeDescription = "Into cell with same item",
+        newLocationDescription = "Move to an empty cell",
+        currentStock = "Current Stock",
+        slotsUsed = "Slots",
+        cellFull = "Full",
+        noMergeCandidates = "No locations with this item",
+        filterCells = "Filter cells...",
+        selectSourceFirst = "Select source stock first",
 
         occupiedStatus = "OCCUPIED",
         activeSlotsFormat = "active slot(s)",
@@ -313,7 +343,7 @@ object Strings {
         confirm = "Confirm",
         consumedMessage = "units consumed",
 
-        tabGridZones = "Grid Zones",
+        tabGridZones = "Dashboard",
         tabInputStock = "Input Stock",
         tabConsumeStock = "Consume Stock",
 

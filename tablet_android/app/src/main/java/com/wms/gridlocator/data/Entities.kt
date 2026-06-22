@@ -50,6 +50,12 @@ data class RecentRelocation(
     val movedAt: String
 )
 
+data class MergeCandidate(
+    val locationCode: String,
+    val itemQty: Int,
+    val slotCount: Int
+)
+
 data class ErpDelivery(
     val itemNumber: String = "",
     val purchaseNumber: String = "",

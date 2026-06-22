@@ -127,6 +127,12 @@ class Repository {
         DbRepository.getCellSlotCounts(shelfCode)
     }
 
+    // ── Merge candidates ──
+
+    suspend fun getMergeCandidates(itemNumber: String): List<MergeCandidate> = withContext(Dispatchers.IO) {
+        DbRepository.getMergeCandidates(itemNumber)
+    }
+
     // ── FIFO consume ──
 
     suspend fun searchFifo(itemNumber: String): List<Booking> = withContext(Dispatchers.IO) {

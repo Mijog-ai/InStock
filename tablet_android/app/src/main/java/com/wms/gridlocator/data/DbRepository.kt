@@ -491,21 +491,43 @@ object DbRepository {
     fun getLocationSuggestions(itemNumber: String, sourceDate: String): List<Pair<String, String>> {
         return SqlClient.withWms { conn ->
             conn.prepareStatement(
-                """SELECT TOP 3 RTRIM(Lagerort) AS loc, Datum
-                   FROM dbo.rohteillager
-                   WHERE RTRIM(Artikelnummer) = ?
-                     AND CAST(RTRIM(Menge) AS INT) > 0
-                   ORDER BY ABS(DATEDIFF(DAY, Datum, ?)) ASC"""
+                """SELECT TOP 6 empty_loc, ref_date
+                   FROM (
+                       SELECT RTRIM(r.Lagerort) AS ref_loc, r.Datum AS ref_date,
+                              LEFT(RTRIM(r.Lagerort), CHARINDEX('-', RTRIM(r.Lagerort)) - 1) AS shelf,
+                              CAST(SUBSTRING(RTRIM(r.Lagerort), CHARINDEX('-', RTRIM(r.Lagerort)) + 1, 2) AS INT) AS sec,
+                              CAST(RIGHT(RTRIM(r.Lagerort), 2) AS INT) AS rw
+                       FROM dbo.rohteillager r
+                       WHERE RTRIM(r.Artikelnummer) = ?
+                         AND CAST(RTRIM(r.Menge) AS INT) > 0
+                   ) ref
+                   CROSS APPLY (
+                       SELECT ref.shelf + '-' + RIGHT('00' + CAST(s.n AS VARCHAR), 2) + '-' + RIGHT('00' + CAST(rw.n AS VARCHAR), 2) AS empty_loc
+                       FROM (VALUES (-1),(0),(1)) ds(n)
+                       CROSS JOIN (VALUES (-1),(0),(1)) dr(n)
+                       CROSS APPLY (SELECT ref.sec + ds.n AS n) s
+                       CROSS APPLY (SELECT ref.rw + dr.n AS n) rw
+                       WHERE s.n >= 1 AND rw.n >= 1
+                         AND NOT (ds.n = 0 AND dr.n = 0)
+                   ) neighbours
+                   WHERE NOT EXISTS (
+                       SELECT 1 FROM dbo.rohteillager occ
+                       WHERE RTRIM(occ.Lagerort) = neighbours.empty_loc
+                         AND CAST(RTRIM(occ.Menge) AS INT) > 0
+                   )
+                   ORDER BY ABS(DATEDIFF(DAY, ref_date, ?)) ASC"""
             ).use { ps ->
                 ps.setString(1, itemNumber.trim())
                 ps.setString(2, sourceDate)
                 ps.executeQuery().use { rs ->
+                    val seen = mutableSetOf<String>()
                     val results = mutableListOf<Pair<String, String>>()
                     while (rs.next()) {
-                        val loc = rs.getString("loc")?.trim() ?: ""
-                        val d = rs.getDate("Datum")
-                        val dateStr = d?.toString() ?: ""
-                        results.add(loc to dateStr)
+                        val loc = rs.getString("empty_loc")?.trim() ?: ""
+                        if (seen.add(loc)) {
+                            val d = rs.getDate("ref_date")
+                            results.add(loc to (d?.toString() ?: ""))
+                        }
                     }
                     results
                 }
@@ -543,6 +565,44 @@ object DbRepository {
                     val map = mutableMapOf<String, Int>()
                     while (rs.next()) map[rs.getString("loc").trim()] = rs.getInt("cnt")
                     map
+                }
+            }
+        }
+    }
+
+    // ── Merge candidates ──
+
+    fun getMergeCandidates(itemNumber: String): List<MergeCandidate> {
+        return SqlClient.withWms { conn ->
+            conn.prepareStatement(
+                """SELECT item_data.loc, item_data.itemQty, ISNULL(slot_data.slotCount, 0) AS slotCount
+                   FROM (
+                       SELECT RTRIM(Lagerort) AS loc, SUM(CAST(RTRIM(Menge) AS INT)) AS itemQty
+                       FROM dbo.rohteillager
+                       WHERE RTRIM(Artikelnummer) = ? AND CAST(RTRIM(Menge) AS INT) > 0
+                       GROUP BY RTRIM(Lagerort)
+                   ) item_data
+                   LEFT JOIN (
+                       SELECT RTRIM(Lagerort) AS loc, COUNT(*) AS slotCount
+                       FROM dbo.rohteillager
+                       WHERE CAST(RTRIM(Menge) AS INT) > 0
+                       GROUP BY RTRIM(Lagerort)
+                   ) slot_data ON item_data.loc = slot_data.loc
+                   ORDER BY item_data.itemQty ASC"""
+            ).use { ps ->
+                ps.setString(1, itemNumber)
+                ps.executeQuery().use { rs ->
+                    val results = mutableListOf<MergeCandidate>()
+                    while (rs.next()) {
+                        results.add(
+                            MergeCandidate(
+                                locationCode = rs.getString("loc").trim(),
+                                itemQty = rs.getInt("itemQty"),
+                                slotCount = rs.getInt("slotCount")
+                            )
+                        )
+                    }
+                    results
                 }
             }
         }

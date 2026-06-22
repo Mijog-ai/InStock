@@ -10,14 +10,14 @@ except ImportError:
 
 CONN_STRING = (
     'DRIVER={SQL Server};'
-    'SERVER=DEBLNSVERP01;'
-    'DATABASE=XALinl;'
-    'UID=XAL_ODBC;'
-    'PWD=XAL_ODBC'
+    f'SERVER={os.environ.get("ERP_DB_SERVER", "DEBLNSVERP01")};'
+    f'DATABASE={os.environ.get("ERP_DB_NAME", "XALinl")};'
+    f'UID={os.environ.get("ERP_DB_USER", "XAL_ODBC")};'
+    f'PWD={os.environ.get("ERP_DB_PASS", "XAL_ODBC")}'
 )
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SQLITE_DB_PATH = os.path.join(_ROOT, "database", "xal_local1.db")
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SQLITE_DB_PATH = os.path.join(_PROJECT_ROOT, "database", "xal_local1.db")
 
 FORCE_SQLITE = os.environ.get("PLANNER_FORCE_SQLITE") == "1"
 

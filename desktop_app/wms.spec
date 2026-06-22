@@ -5,7 +5,8 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 
 block_cipher = None
 
-ROOT = os.path.abspath('.')
+ROOT = os.path.abspath(os.path.join('.', '..'))
+DESKTOP = os.path.abspath('.')
 
 webview_hidden = collect_submodules('webview')
 clr_hidden = collect_submodules('clr_loader') + collect_submodules('pythonnet')
@@ -16,11 +17,13 @@ clr_bins = collect_dynamic_libs('clr_loader') + collect_dynamic_libs('pythonnet'
 
 a = Analysis(
     ['main.py'],
-    pathex=[ROOT],
+    pathex=[ROOT, DESKTOP],
     binaries=clr_bins,
     datas=[
         ('templates', 'templates'),
-        (os.path.join('..', 'grid_config.json'), '.'),
+        (os.path.join(ROOT, 'grid_config.json'), '.'),
+        (os.path.join(ROOT, '.env'), '.'),
+        (os.path.join(ROOT, 'shared'), 'shared'),
     ] + webview_data + clr_data,
     hiddenimports=[
         'pyodbc',
@@ -34,9 +37,16 @@ a = Analysis(
         'webview.platforms.win32',
         'clr_loader',
         'clr_loader.ffi',
-        'clr_loader.ffi',
         'pythonnet',
         'clr',
+        'shared',
+        'shared.sql_client',
+        'shared.db_repository',
+        'shared.config_loader',
+        'shared.erp_connection',
+        'shared.erp_repository',
+        'shared.env',
+        'shared.seed_db',
     ] + webview_hidden + clr_hidden,
     hookspath=[],
     hooksconfig={},

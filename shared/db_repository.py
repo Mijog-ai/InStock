@@ -1,6 +1,6 @@
 """WMS data layer — SQL Server backend (Rohteillager database)."""
 from datetime import date, datetime
-from sql_client import get_cursor
+from shared.sql_client import get_cursor
 
 
 def _strip(val):
@@ -298,19 +298,68 @@ def search_stock_for_relocation(item_number):
 def get_location_suggestions(item_number, source_date):
     with get_cursor() as cur:
         cur.execute(
-            """SELECT TOP 3 RTRIM(Lagerort) AS loc, Datum
-               FROM rohteillager
-               WHERE RTRIM(Artikelnummer) = ?
-                 AND CAST(RTRIM(Menge) AS INT) > 0
-               ORDER BY ABS(DATEDIFF(DAY, Datum, ?)) ASC""",
+            """SELECT TOP 6 empty_loc, ref_date
+               FROM (
+                   SELECT RTRIM(r.Lagerort) AS ref_loc, r.Datum AS ref_date,
+                          LEFT(RTRIM(r.Lagerort), CHARINDEX('-', RTRIM(r.Lagerort)) - 1) AS shelf,
+                          CAST(SUBSTRING(RTRIM(r.Lagerort), CHARINDEX('-', RTRIM(r.Lagerort)) + 1, 2) AS INT) AS sec,
+                          CAST(RIGHT(RTRIM(r.Lagerort), 2) AS INT) AS rw
+                   FROM dbo.rohteillager r
+                   WHERE RTRIM(r.Artikelnummer) = ?
+                     AND CAST(RTRIM(r.Menge) AS INT) > 0
+               ) ref
+               CROSS APPLY (
+                   SELECT ref.shelf + '-' + RIGHT('00' + CAST(s.n AS VARCHAR), 2) + '-' + RIGHT('00' + CAST(rw.n AS VARCHAR), 2) AS empty_loc
+                   FROM (VALUES (-1),(0),(1)) ds(n)
+                   CROSS JOIN (VALUES (-1),(0),(1)) dr(n)
+                   CROSS APPLY (SELECT ref.sec + ds.n AS n) s
+                   CROSS APPLY (SELECT ref.rw + dr.n AS n) rw
+                   WHERE s.n >= 1 AND rw.n >= 1
+                     AND NOT (ds.n = 0 AND dr.n = 0)
+               ) neighbours
+               WHERE NOT EXISTS (
+                   SELECT 1 FROM dbo.rohteillager occ
+                   WHERE RTRIM(occ.Lagerort) = neighbours.empty_loc
+                     AND CAST(RTRIM(occ.Menge) AS INT) > 0
+               )
+               ORDER BY ABS(DATEDIFF(DAY, ref_date, ?)) ASC""",
             item_number.strip(), source_date,
         )
+        seen = set()
         results = []
         for row in cur.fetchall():
-            d = row[1]
-            date_str = d.isoformat() if isinstance(d, (date, datetime)) else str(d or "")
-            results.append({"location": row[0], "date": date_str})
+            loc = row[0]
+            if loc not in seen:
+                seen.add(loc)
+                d = row[1]
+                date_str = d.isoformat() if isinstance(d, (date, datetime)) else str(d or "")
+                results.append({"location": loc, "date": date_str})
         return results
+
+
+def get_merge_candidates(item_number):
+    with get_cursor() as cur:
+        cur.execute(
+            """SELECT item_data.loc, item_data.itemQty, ISNULL(slot_data.slotCount, 0) AS slotCount
+               FROM (
+                   SELECT RTRIM(Lagerort) AS loc, SUM(CAST(RTRIM(Menge) AS INT)) AS itemQty
+                   FROM dbo.rohteillager
+                   WHERE RTRIM(Artikelnummer) = ? AND CAST(RTRIM(Menge) AS INT) > 0
+                   GROUP BY RTRIM(Lagerort)
+               ) item_data
+               LEFT JOIN (
+                   SELECT RTRIM(Lagerort) AS loc, COUNT(*) AS slotCount
+                   FROM dbo.rohteillager
+                   WHERE CAST(RTRIM(Menge) AS INT) > 0
+                   GROUP BY RTRIM(Lagerort)
+               ) slot_data ON item_data.loc = slot_data.loc
+               ORDER BY item_data.itemQty ASC""",
+            item_number.strip(),
+        )
+        return [
+            {"location_code": row[0], "item_qty": row[1], "slot_count": row[2]}
+            for row in cur.fetchall()
+        ]
 
 
 def get_all_cell_slot_counts():
